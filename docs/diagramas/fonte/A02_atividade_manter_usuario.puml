@@ -1,0 +1,42 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Atividades - Manter Usuário (UC04, UC05, UC06)
+|Usuário|
+start
+:Clicar em "Conta" na lateral;
+|Sistema|
+:Exibir dados do usuário (consultar);
+|Usuário|
+if (Ação?) then (alterar)
+  :Informar novo nome e/ou nova senha;
+  :Informar senha atual;
+  :Clicar em "Salvar alterações";
+  |Sistema|
+  if (Senha atual correta?) then (não)
+    :Exibir "A senha atual está incorreta";
+    stop
+  endif
+  if (Nova senha informada?) then (sim)
+    if (6+ caracteres e confirmação igual?) then (não)
+      :Exibir mensagem de erro;
+      stop
+    endif
+    :Criptografar nova senha;
+  endif
+  :Atualizar usuário no banco;
+  :Exibir "Dados atualizados";
+else (excluir)
+  |Usuário|
+  :Digitar senha e clicar "Excluir usuário";
+  :Confirmar exclusão;
+  |Sistema|
+  if (Senha correta?) then (não)
+    :Exibir "Senha incorreta";
+    stop
+  endif
+  :Excluir usuário do banco;
+  :Encerrar sessão;
+  :Voltar à tela de login (primeiro acesso);
+endif
+stop
+@enduml

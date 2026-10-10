@@ -1,0 +1,31 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Implantação
+
+node "Computador da padaria\n(Windows 8 / 10 / 11)" as PC {
+  node "Navegador\n(Chrome / Edge / Firefox)" as NAV {
+    artifact "Telas HTML/CSS/JS" as TELAS
+  }
+  node "Java 17+ (JRE/JDK)" as JVM {
+    artifact "ConfeitaSys.jar\n(servidor em 127.0.0.1:8080)" as JAR
+    artifact "lib/sqlite-jdbc-3.46.1.3.jar" as DRV
+  }
+  folder "Pasta do sistema" {
+    database "dados/confeitasys.db" as DB
+    folder "backup/" as B
+    folder "relatorios/" as R
+  }
+  artifact "iniciar.bat" as BAT
+}
+
+BAT --> JAR : java -jar
+NAV --> JAR : HTTP (localhost)
+JAR --> DRV
+DRV --> DB : JDBC
+JAR --> B
+JAR --> R
+note bottom of PC
+  Tudo roda localmente: o servidor só aceita
+  conexões do próprio computador (127.0.0.1).
+end note
+@enduml

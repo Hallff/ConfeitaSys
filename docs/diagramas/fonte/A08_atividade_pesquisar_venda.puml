@@ -1,0 +1,22 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Atividades - Pesquisar Venda (UC16, UC17)
+|Usuário|
+start
+:Digitar na busca (canto superior direito)\nou escolher a data;
+|Sistema|
+if (Texto é número (12 ou #12)?) then (sim)
+  :Buscar pelo nº do pedido (qualquer data);
+elseif (Texto é hora (14h, 14:30)?) then (sim)
+  :Filtrar vendas da data pela hora;
+else (nome)
+  :Filtrar vendas da data pelo nome do produto\n(sem diferenciar acentos e maiúsculas);
+endif
+:Exibir pedidos encontrados com resumo\n(quantidade, faturamento, custo, lucro);
+|Usuário|
+if (Expandir "Ingredientes" de um pedido?) then (sim)
+  |Sistema|
+  :Mostrar ingredientes, quantidade e valor;
+endif
+stop
+@enduml

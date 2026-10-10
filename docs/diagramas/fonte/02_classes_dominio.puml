@@ -1,0 +1,90 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Classes - Domínio (pacote confeitasys.modelo)
+hide circle
+skinparam classAttributeIconSize 0
+
+class Usuario <<Cadastro 1>> {
+  - id : int
+  - nome : String
+  - senhaHash : String
+  - criadoEm : String
+  --
+  + paraTela() : Map
+}
+
+class Ingrediente <<Cadastro 2>> {
+  - id : int
+  - nome : String
+  - unidade : String  {KG | L}
+  - quantidade : double
+  - custoUnitario : double
+  - quantidadeAlerta : double
+  - validade : String
+  - atualizadoEm : String
+  --
+  + valorEmEstoque() : double
+  + estoqueBaixo() : boolean
+  + diasParaVencer() : Long
+  + vencido() : boolean
+  + venceLogo() : boolean
+  + paraTela() : Map
+}
+
+class Produto <<Cadastro 3>> {
+  - id : int
+  - nome : String
+  - tamanho : String
+  - recheio : String
+  - precoVenda : double
+  --
+  + nomeCompleto() : String
+  + custoEstimado() : double
+  + paraTela() : Map
+}
+
+class ItemReceita {
+  - ingredienteId : int
+  - ingredienteNome : String
+  - unidade : String
+  - quantidade : double
+  - custoUnitario : double
+  --
+  + custoEstimado() : double
+}
+
+class Venda <<Movimento>> {
+  - id : int
+  - dataHora : String
+  - produtoId : Integer
+  - produtoNome : String
+  - valorVenda : double
+  --
+  + custo() : double
+  + lucro() : double
+  + data() : String
+  + hora() : String
+  + paraTela() : Map
+}
+
+class ItemVenda {
+  - ingredienteId : Integer
+  - nome : String
+  - unidade : String
+  - quantidade : double
+  - custo : double
+}
+
+Produto "1" *-- "1..*" ItemReceita : receita >
+ItemReceita "0..*" --> "1" Ingrediente : usa >
+Venda "1" *-- "1..*" ItemVenda : itens >
+ItemVenda "0..*" --> "0..1" Ingrediente : baixa no estoque >
+Venda "0..*" --> "0..1" Produto : vende >
+Usuario ..> Venda : registra >
+
+note bottom of Ingrediente
+  estoqueBaixo() = quantidade <= quantidadeAlerta
+  (a quantidade de alerta é definida pelo
+  usuário para cada ingrediente)
+end note
+@enduml

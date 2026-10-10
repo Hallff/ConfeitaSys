@@ -1,0 +1,44 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Atividades - Registrar Venda (UC15)
+|Usuário|
+start
+:Clicar no botão + (centro superior) ou tecla N;
+|Sistema|
+if (Existem produtos cadastrados?) then (não)
+  :Orientar a cadastrar produtos;
+  stop
+endif
+:Abrir janela "Nova venda";
+|Usuário|
+:Escolher o produto vendido;
+|Sistema|
+:Preencher valor da venda com o preço do produto;
+:Preencher ingredientes com a receita;
+:Calcular custo e lucro;
+|Usuário|
+:Conferir / ajustar ingredientes e valor;
+:Clicar em "Salvar venda";
+|Sistema|
+if (Produto, valor e ingredientes válidos?) then (não)
+  :Exibir mensagem de erro;
+  stop
+endif
+:Iniciar transação no banco;
+if (Estoque suficiente de todos os ingredientes?) then (não)
+  :Cancelar transação (rollback);
+  :Exibir "Estoque insuficiente de X";
+  stop
+endif
+:Gravar venda com data e hora (nº do pedido);
+:Gravar itens da venda com custo;
+:Dar baixa nos ingredientes do estoque;
+:Confirmar transação (commit);
+:Exibir "Venda registrada" e atualizar lista;
+:Verificar alertas;
+if (Algum ingrediente chegou na qtd. de alerta?) then (sim)
+  :Exibir ALERTA de estoque baixo\ncom quantidade disponível;
+  :Tocar sirene;
+endif
+stop
+@enduml

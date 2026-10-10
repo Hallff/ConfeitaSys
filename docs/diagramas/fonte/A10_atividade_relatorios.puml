@@ -1,0 +1,30 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Atividades - Relatórios (opcionais) (UC22 a UC25)
+|Usuário|
+start
+:Clicar em "Relatórios" (opcional);
+:Escolher a data e a aba\n(Todos, Vendas, Estoque, Itens em falta);
+|Sistema|
+fork
+  :Relatório de vendas do dia:\npedidos, faturamento, custo, lucro,\ningredientes usados;
+fork again
+  :Relatório do estoque:\nquantidade, custo, valor, alerta, validade;
+fork again
+  :Relatório de itens em falta:\nestoque baixo ou vencidos,\nquanto comprar e custo estimado;
+end fork
+:Exibir relatórios na tela;
+|Usuário|
+:Escolher ação (Imprimir, Salvar ou apenas consultar);
+|Sistema|
+if (Ação escolhida?) then (Imprimir)
+  :Abrir impressão do navegador;
+elseif (Salvar e fazer backup?) then (sim)
+  :Gravar relatorios/relatorios-AAAA-MM-DD.html;
+  :Fazer backup do banco;
+  :Informar onde os arquivos foram salvos;
+else (apenas consultar)
+  :Manter relatórios na tela;
+endif
+stop
+@enduml

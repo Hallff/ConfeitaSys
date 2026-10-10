@@ -1,0 +1,30 @@
+@startuml
+!include _seq.iuml
+title Sequência - Cadastrar Usuário no Primeiro Acesso (UC01)
+actor Usuário as U
+participant "Tela de Login\n(login.js)" as T
+participant "Servidor\n(API REST)" as S
+participant UsuarioServico as US
+participant Senha
+participant UsuarioDAO as D
+database "SQLite" as DB
+U -> T : abrir sistema
+T -> S : GET /api/status
+S -> US : existeUsuario()
+US -> D : buscar(con)
+D -> DB : SELECT ... FROM usuario
+DB --> D : nenhum registro
+S --> T : {temUsuario: false}
+T --> U : mostrar formulário de primeiro acesso
+U -> T : nome, senha, confirmação
+T -> T : validar (6+ caracteres, confirmação)
+T -> S : POST /api/usuario {nome, senha}
+S -> US : cadastrar(dados)
+US -> Senha : criptografar(senha)
+Senha --> US : "pbkdf2_sha256$210000$salt$hash"
+US -> D : inserir(con, usuario)
+D -> DB : INSERT INTO usuario
+S -> S : criarSessao() (cookie HttpOnly)
+S --> T : 201 {ok: true}
+T --> U : abrir tela de Vendas
+@enduml

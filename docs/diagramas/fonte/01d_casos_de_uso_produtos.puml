@@ -1,0 +1,25 @@
+@startuml
+!include _estilo.iuml
+title Casos de Uso - Cadastro 3 (Produtos do Cardápio)
+left to right direction
+actor "Usuário" as U
+rectangle "Produtos" {
+  usecase "UC11 Incluir produto" as UC11
+  usecase "UC12 Consultar produtos\ne ver receita" as UC12
+  usecase "UC13 Alterar produto" as UC13
+  usecase "UC14 Excluir produto" as UC14
+  usecase "Montar receita\n(ingredientes em g / ml)" as REC
+  usecase "Calcular custo e\nlucro estimado" as CUSTO
+  usecase "Não permitir produto\nrepetido (nome+tamanho+recheio)" as DUP
+}
+U --> UC11
+U --> UC12
+U --> UC13
+U --> UC14
+UC11 ..> REC : <<include>>
+UC11 ..> CUSTO : <<include>>
+UC11 ..> DUP : <<include>>
+UC13 ..> REC : <<include>>
+UC13 ..> CUSTO : <<include>>
+UC13 ..> DUP : <<include>>
+@enduml

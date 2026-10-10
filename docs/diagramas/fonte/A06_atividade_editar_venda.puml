@@ -1,0 +1,28 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Atividades - Editar Venda (UC18)
+|Usuário|
+start
+:Clicar no lápis à direita do pedido;
+:Escolher "Editar";
+|Sistema|
+:Carregar venda (produto, valor, ingredientes);
+:Mostrar estoque disponível + o que a venda já usou;
+|Usuário|
+:Alterar produto, valor e/ou ingredientes;
+:Clicar em "Salvar venda";
+|Sistema|
+:Iniciar transação;
+if (Estoque suficiente considerando\no uso anterior da venda?) then (não)
+  :Rollback;
+  :Exibir "Estoque insuficiente";
+  stop
+endif
+:Devolver ao estoque os ingredientes antigos;
+:Dar baixa nos novos ingredientes;
+:Atualizar venda e itens;
+:Commit;
+:Exibir "Pedido atualizado";
+:Verificar alertas (sirene se estoque baixo);
+stop
+@enduml

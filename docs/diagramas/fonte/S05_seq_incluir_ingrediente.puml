@@ -1,0 +1,29 @@
+@startuml
+!include _seq.iuml
+title Sequência - Incluir Ingrediente no Estoque (UC07)
+actor Usuário as U
+participant "Tela Estoque\n(app.js)" as T
+participant Servidor as S
+participant IngredienteServico as IS
+participant IngredienteDAO as D
+database SQLite as DB
+U -> T : botão armário > "+ Novo item"
+T --> U : formulário
+U -> T : nome, kg/L, quantidade, R$,\nqtd. de alerta, validade
+T -> T : validar campos
+T -> S : POST /api/ingredientes
+S -> IS : incluir(dados)
+IS -> IS : preencher(): validar e\ncalcular custo = valor / quantidade
+IS -> D : buscarPorNome(con, nome)
+D -> DB : SELECT ... WHERE nome = ?
+alt nome já existe
+  S --> T : 400 "Já existe um item chamado..."
+else caso contrário
+  IS -> D : inserir(con, ingrediente)
+  D -> DB : INSERT INTO ingrediente
+  S --> T : 201 ingrediente
+  T --> U : "Item cadastrado no estoque"
+  T -> S : GET /api/alertas
+  note right : ver diagrama S14
+end
+@enduml

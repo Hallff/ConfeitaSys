@@ -1,0 +1,35 @@
+@startuml
+!include _seq.iuml
+title Sequência - Alerta de Estoque Baixo com Sirene (UC20, UC21)
+actor Usuário as U
+participant "Qualquer tela\n(app.js)" as T
+participant "Sirene\n(Web Audio API)" as SI
+participant Servidor as S
+participant IngredienteServico as IS
+participant IngredienteDAO as D
+database SQLite as DB
+loop a cada 20 s e após qualquer alteração
+  T -> S : GET /api/alertas
+  S -> IS : alertas()
+  IS -> D : listar(con)
+  D -> DB : SELECT ... FROM ingrediente
+  IS -> IS : estoqueBaixo(): quantidade <= quantidadeAlerta\nvencido() / venceLogo()
+  S --> T : {estoqueBaixo:[mensagens], validade:[mensagens]}
+  T -> T : comparar com alertas já vistos
+  opt existe alerta novo
+    T --> U : faixa vermelha "ALERTA: ESTOQUE BAIXO"\n"O estoque de X está baixo! Disponível: Y"
+    opt item novo com estoque baixo
+      T -> SI : tocar()
+      SI --> U : som de sirene (4 s)
+    end
+    alt Usuário clica "Entendi"
+      U -> T : Entendi
+      T -> T : gravar alerta como visto
+    else Usuário clica "Ver estoque"
+      U -> T : Ver estoque
+      T -> S : GET /api/ingredientes
+      T --> U : Estoque filtrado (estoque baixo)
+    end
+  end
+end
+@enduml

@@ -1,0 +1,33 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Estados - Ingrediente (Estoque e Validade)
+
+[*] --> Cadastrado : incluir ingrediente
+state Cadastrado {
+  state "Quantidade" as Q {
+    state "Normal" as Normal : quantidade > qtd. de alerta
+    state "Estoque baixo" as Baixo : quantidade <= qtd. de alerta\n>> ALERTA + SIRENE
+    state "Esgotado" as Esgotado : quantidade = 0\n>> ALERTA + SIRENE
+    [*] --> Normal
+    Normal --> Baixo : venda dá baixa
+    Baixo --> Esgotado : venda dá baixa
+    Baixo --> Normal : reposição (editar) /\ndevolução de venda
+    Esgotado --> Normal : reposição
+    Esgotado --> Baixo : reposição parcial
+  }
+  ||
+  state "Validade" as V {
+    state "Sem validade" as SemV
+    state "Válido" as Valido
+    state "Vencendo" as Vencendo : faltam <= 3 dias\n>> alerta de validade
+    state "Vencido" as Vencido : >> alerta de validade
+    [*] --> SemV
+    [*] --> Valido
+    Valido --> Vencendo : passagem do tempo
+    Vencendo --> Vencido : passou a data
+    Vencido --> Valido : nova validade (editar)
+    Vencendo --> Valido : nova validade (editar)
+  }
+}
+Cadastrado --> [*] : excluir\n(se não estiver em receita)
+@enduml

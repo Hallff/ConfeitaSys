@@ -1,0 +1,33 @@
+@startuml
+!include _estilo.iuml
+title Casos de Uso - Vendas
+left to right direction
+actor "Usuário" as U
+rectangle "Vendas" {
+  usecase "UC15 Registrar venda" as UC15
+  usecase "UC16 Pesquisar venda\n(nome, nº do pedido ou hora)" as UC16
+  usecase "UC17 Ver ingredientes,\nquantidade e valor" as UC17
+  usecase "UC18 Editar venda" as UC18
+  usecase "UC19 Excluir venda / devolução" as UC19
+  usecase "Escolher produto\n(receita preenchida)" as PROD
+  usecase "Verificar estoque suficiente" as VER
+  usecase "Dar baixa no estoque" as BAIXA
+  usecase "Calcular custo e lucro" as CL
+  usecase "Devolver ingredientes\nao estoque" as DEV
+  usecase "UC20 Alerta de estoque\nbaixo com sirene" as UC20
+}
+U --> UC15
+U --> UC16
+U --> UC18
+U --> UC19
+UC15 ..> PROD : <<include>>
+UC15 ..> VER : <<include>>
+UC15 ..> BAIXA : <<include>>
+UC15 ..> CL : <<include>>
+UC18 ..> DEV : <<include>>
+UC18 ..> VER : <<include>>
+UC18 ..> BAIXA : <<include>>
+UC17 ..> UC16 : <<extend>>
+DEV ..> UC19 : <<extend>>
+UC20 ..> BAIXA : <<extend>>
+@enduml

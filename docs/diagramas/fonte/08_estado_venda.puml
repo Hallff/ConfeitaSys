@@ -1,0 +1,20 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Estados - Venda
+
+[*] --> EmDigitacao : clicar no botão +
+state "Em digitação" as EmDigitacao : produto, valor e ingredientes
+EmDigitacao --> [*] : cancelar
+EmDigitacao --> Validando : salvar
+state "Validando" as Validando : estoque suficiente?\ncampos preenchidos?
+Validando --> EmDigitacao : erro (mensagem)
+Validando --> Registrada : ok / baixa no estoque
+state "Registrada" as Registrada : nº do pedido gerado\ndata e hora gravadas
+Registrada --> EmEdicao : lápis > Editar
+state "Em edição" as EmEdicao
+EmEdicao --> Registrada : cancelar
+EmEdicao --> Validando : salvar\n(devolve uso antigo e desconta o novo)
+Registrada --> Excluida : lápis > Excluir / devolução
+state "Excluída" as Excluida : ingredientes devolvidos\nao estoque (opcional)
+Excluida --> [*]
+@enduml

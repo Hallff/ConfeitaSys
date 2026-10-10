@@ -1,0 +1,31 @@
+@startuml
+!include _seq.iuml
+title Sequência - Incluir / Alterar Produto com Receita (UC11, UC13)
+actor Usuário as U
+participant "Tela Produtos\n(app.js)" as T
+participant Servidor as S
+participant ProdutoServico as PS
+participant ProdutoDAO as PD
+participant IngredienteDAO as ID
+database SQLite as DB
+U -> T : "+ Novo produto" (ou lápis > Editar)
+T -> S : GET /api/ingredientes
+S --> T : ingredientes do estoque
+U -> T : nome, tamanho, recheio, preço\n+ ingredientes (g/ml)
+T -> T : calcular custo e lucro estimado
+T -> S : POST /api/produtos (ou PUT /api/produtos/{id})
+S -> PS : incluir(dados) / alterar(id, dados)
+PS -> PD : existe(con, produto)
+loop cada ingrediente da receita
+  PS -> ID : buscar(con, ingredienteId)
+end
+alt produto repetido ou dados inválidos
+  S --> T : 400 mensagem
+else caso contrário
+  PS -> PD : inserir / alterar(con, produto)
+  PD -> DB : INSERT/UPDATE produto
+  PD -> DB : DELETE + INSERT produto_ingrediente
+  S --> T : 201/200 produto
+  T --> U : "Produto cadastrado / atualizado"
+end
+@enduml

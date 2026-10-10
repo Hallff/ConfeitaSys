@@ -1,0 +1,22 @@
+@startuml
+!include _seq.iuml
+title Sequência - Backup e Sair (UC26, UC03)
+actor Usuário as U
+participant "Tela (app.js)" as T
+participant Servidor as S
+participant Conexao as C
+database SQLite as DB
+== Backup ==
+U -> T : clicar em "Backup"
+T -> S : POST /api/backup
+S -> C : backup()
+C -> DB : VACUUM INTO 'backup/confeitasys-AAAAMMDD-HHMMSS.db'
+S --> T : {arquivo}
+T --> U : "Backup salvo em ..."
+== Sair ==
+U -> T : clicar em "Sair"
+T -> S : POST /api/logout
+S -> S : remover sessão + apagar cookie
+S --> T : 200 {ok}
+T --> U : tela de login
+@enduml

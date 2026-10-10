@@ -1,0 +1,128 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Classes - Arquitetura em Camadas
+hide circle
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "confeitasys" {
+  class Main {
+    + main(args : String[]) : void
+    - abrirNavegador(endereco : String) : void
+  }
+}
+
+package "confeitasys.controle  (API REST)" {
+  class Servidor {
+    - sessoes : Map<String, Instant>
+    - falhasSeguidas : int
+    + iniciar() : void
+    - tratarApi(ex) : void
+    - rotasUsuario(...) / rotasIngredientes(...)
+    - rotasProdutos(...) / rotasVendas(...)
+    - rotasRelatorios(...)
+    - login(ex) : void
+    - criarSessao(ex) / logado(ex) : boolean
+    - tratarArquivo(ex) : void
+  }
+}
+
+package "confeitasys.servico  (Regras de negócio)" {
+  class UsuarioServico {
+    + existeUsuario() : boolean
+    + cadastrar(dados) : void
+    + login(nome, senha) : boolean
+    + consultar() : Usuario
+    + alterar(dados) : Usuario
+    + excluir(dados) : void
+  }
+  class IngredienteServico {
+    + listar() : List<Ingrediente>
+    + incluir(dados) : Ingrediente
+    + alterar(id, dados) : Ingrediente
+    + excluir(id) : void
+    + alertas() : Map
+  }
+  class ProdutoServico {
+    + listar() : List<Produto>
+    + consultar(id) : Produto
+    + incluir(dados) : Produto
+    + alterar(id, dados) : Produto
+    + excluir(id) : void
+  }
+  class VendaServico {
+    + pesquisar(data, busca) : List<Venda>
+    + consultar(id) : Venda
+    + registrar(dados) : Venda
+    + editar(id, dados) : Venda
+    + excluir(id, devolver) : void
+  }
+  class RelatorioServico {
+    + vendasDoDia(data) : Map
+    + estoque() : Map
+    + faltando() : Map
+  }
+}
+
+package "confeitasys.dao  (Acesso ao banco)" {
+  class Conexao {
+    - con : Connection
+    + executar(trabalho) : T
+    + backup() : String
+    - criarTabelas() : void
+  }
+  class UsuarioDAO {
+    + buscar(con) / inserir / alterar / excluir
+  }
+  class IngredienteDAO {
+    + listar / buscar / buscarPorNome
+    + inserir / alterar / excluir
+    + movimentar(con, id, delta, quando)
+    + produtosQueUsam(con, id)
+  }
+  class ProdutoDAO {
+    + listar / buscar / existe
+    + inserir / alterar / excluir
+  }
+  class VendaDAO {
+    + listar(con, data) / buscar
+    + inserir / alterar / excluir
+  }
+}
+
+package "confeitasys.util" {
+  class Senha {
+    + {static} criptografar(senha) : String
+    + {static} conferir(senha, hash) : boolean
+  }
+  class Json
+  class Util
+  class RegraException
+}
+
+class "SQLite - confeitasys.db" as DB <<banco de dados>>
+
+Main --> Conexao : cria
+Main --> Servidor : inicia
+Servidor --> UsuarioServico
+Servidor --> IngredienteServico
+Servidor --> ProdutoServico
+Servidor --> VendaServico
+Servidor --> RelatorioServico
+Servidor ..> Json
+RelatorioServico --> VendaServico
+RelatorioServico --> IngredienteServico
+UsuarioServico --> UsuarioDAO
+UsuarioServico ..> Senha
+IngredienteServico --> IngredienteDAO
+ProdutoServico --> ProdutoDAO
+ProdutoServico --> IngredienteDAO
+VendaServico --> VendaDAO
+VendaServico --> ProdutoDAO
+VendaServico --> IngredienteDAO
+UsuarioServico --> Conexao
+IngredienteServico --> Conexao
+ProdutoServico --> Conexao
+VendaServico --> Conexao
+Conexao --> DB : JDBC
+@enduml

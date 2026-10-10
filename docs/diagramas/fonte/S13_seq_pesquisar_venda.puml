@@ -1,0 +1,25 @@
+@startuml
+!include _seq.iuml
+title Sequência - Pesquisar Venda e Ver Ingredientes (UC16, UC17)
+actor Usuário as U
+participant "Tela Vendas" as T
+participant Servidor as S
+participant VendaServico as VS
+participant VendaDAO as VD
+database SQLite as DB
+U -> T : digitar na busca (canto superior direito)
+T -> S : GET /api/vendas?data=AAAA-MM-DD&busca=texto
+S -> VS : pesquisar(data, busca)
+alt busca é nº do pedido (12 ou #12)
+  VS -> VD : buscar(con, 12)
+  VD -> DB : SELECT ... WHERE id = 12
+else busca é hora (14h / 14:30) ou nome
+  VS -> VD : listar(con, data)
+  VD -> DB : SELECT ... WHERE data = ?
+  VS -> VS : filtrar por hora ou nome\n(sem acento / maiúscula)
+end
+S --> T : lista de vendas
+T --> U : pedidos + resumo do dia
+U -> T : expandir "Ingredientes"
+T --> U : ingrediente, quantidade e valor
+@enduml

@@ -1,0 +1,36 @@
+@startuml
+!include _estilo.iuml
+title Casos de Uso - Alertas, Relatórios e Backup
+left to right direction
+actor "Usuário" as U
+actor "Relógio do sistema" as T
+rectangle "Alertas" {
+  usecase "UC20 Emitir alerta de estoque baixo\n(mensagem + quantidade + sirene)" as UC20
+  usecase "UC21 Emitir alerta de validade" as UC21
+  usecase "Verificar alertas\n(a cada 20 s e após alterações)" as VA
+  usecase "Silenciar alerta (Entendi)" as SIL
+  usecase "Ir para o estoque" as VER
+}
+rectangle "Relatórios e Backup (opcionais)" {
+  usecase "UC22 Relatório de vendas do dia" as UC22
+  usecase "UC23 Relatório do estoque" as UC23
+  usecase "UC24 Relatório de itens em falta" as UC24
+  usecase "UC25 Imprimir / salvar relatórios" as UC25
+  usecase "UC26 Fazer backup do banco" as UC26
+}
+T --> VA
+VA ..> UC20 : <<include>>
+VA ..> UC21 : <<include>>
+U --> SIL
+U --> VER
+SIL ..> UC20 : <<extend>>
+VER ..> UC20 : <<extend>>
+U --> UC22
+U --> UC23
+U --> UC24
+U --> UC26
+UC25 ..> UC22 : <<extend>>
+UC25 ..> UC23 : <<extend>>
+UC25 ..> UC24 : <<extend>>
+UC25 ..> UC26 : <<include>>
+@enduml

@@ -1,0 +1,47 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Atividades - Manter Produto do Cardápio (UC11 a UC14)
+|Usuário|
+start
+:Clicar em "Produtos" na lateral;
+|Sistema|
+:Listar produtos com preço, custo e lucro estimado;
+|Usuário|
+if (Ação?) then (incluir / alterar)
+  :Clicar "+ Novo produto" ou lápis > Editar;
+  |Sistema|
+  if (Existem ingredientes no estoque?) then (não)
+    :Orientar a cadastrar o estoque primeiro;
+    stop
+  endif
+  |Usuário|
+  :Informar nome, tamanho, recheio e preço de venda;
+  repeat
+    :Escolher ingrediente e quantidade (g ou ml);
+    |Sistema|
+    :Calcular custo da linha e da receita;
+    :Mostrar lucro estimado;
+    |Usuário|
+  repeat while (Adicionar outro ingrediente?) is (sim)
+  ->não;
+  :Clicar em "Salvar produto";
+  |Sistema|
+  if (Nome, preço e receita válidos?) then (não)
+    :Exibir mensagem de erro;
+    stop
+  endif
+  if (Produto repetido (nome+tamanho+recheio)?) then (sim)
+    :Exibir "Já existe o produto...";
+    stop
+  endif
+  :Gravar produto e receita (transação);
+else (excluir)
+  |Usuário|
+  :Lápis > Excluir e confirmar;
+  |Sistema|
+  :Excluir produto e receita;
+  note right: vendas antigas mantêm\no nome do produto
+endif
+:Atualizar lista de produtos;
+stop
+@enduml

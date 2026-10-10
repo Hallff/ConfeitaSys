@@ -1,0 +1,28 @@
+@startuml
+!include _estilo.iuml
+title Casos de Uso - Cadastro 2 (Estoque de Ingredientes)
+left to right direction
+actor "Usuário" as U
+rectangle "Estoque" {
+  usecase "UC07 Incluir ingrediente" as UC07
+  usecase "UC08 Consultar / filtrar estoque\n(todos, estoque baixo, validade)" as UC08
+  usecase "UC09 Alterar ingrediente\n(repor estoque)" as UC09
+  usecase "UC10 Excluir ingrediente" as UC10
+  usecase "Escolher unidade\n(kg ou litros)" as UN
+  usecase "Calcular custo por kg/L\n(valor pago / quantidade)" as CUSTO
+  usecase "Informar qtd. de alerta\ne data de validade" as AL
+  usecase "Verificar se está\nem alguma receita" as REC
+  usecase "Não permitir nome repetido" as DUP
+}
+U --> UC07
+U --> UC08
+U --> UC09
+U --> UC10
+UC07 ..> UN : <<include>>
+UC07 ..> CUSTO : <<include>>
+UC07 ..> AL : <<include>>
+UC07 ..> DUP : <<include>>
+UC09 ..> CUSTO : <<include>>
+UC09 ..> DUP : <<include>>
+UC10 ..> REC : <<include>>
+@enduml

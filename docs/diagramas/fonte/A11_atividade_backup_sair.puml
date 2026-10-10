@@ -1,0 +1,19 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Atividades - Backup e Sair (UC26, UC03)
+|Usuário|
+start
+if (Ação?) then (Backup)
+  :Clicar em "Backup" na lateral;
+  |Sistema|
+  :Executar VACUUM INTO\n'backup/confeitasys-AAAAMMDD-HHMMSS.db';
+  :Exibir caminho do arquivo de backup;
+else (Sair)
+  |Usuário|
+  :Clicar em "Sair";
+  |Sistema|
+  :Apagar sessão e cookie;
+  :Abrir tela de login;
+endif
+stop
+@enduml

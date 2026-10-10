@@ -1,0 +1,26 @@
+@startuml
+!include _seq.iuml
+title Sequência - Consultar e Alterar Ingrediente (UC08, UC09)
+actor Usuário as U
+participant "Tela Estoque" as T
+participant Servidor as S
+participant IngredienteServico as IS
+participant IngredienteDAO as D
+database SQLite as DB
+U -> T : abrir Estoque
+T -> S : GET /api/ingredientes
+S -> IS : listar()
+IS -> D : listar(con)
+D -> DB : SELECT ... ORDER BY nome
+S --> T : lista (com estoqueBaixo, vencido...)
+T --> U : tabela + filtros (todos / estoque baixo / validade)
+U -> T : lápis > alterar dados (ex.: repor estoque)
+T -> S : PUT /api/ingredientes/{id}
+S -> IS : alterar(id, dados)
+IS -> D : buscar(con, id)
+IS -> D : buscarPorNome(con, nome)
+IS -> D : alterar(con, ingrediente)
+D -> DB : UPDATE ingrediente
+S --> T : 200 ingrediente
+T --> U : "Item atualizado"
+@enduml

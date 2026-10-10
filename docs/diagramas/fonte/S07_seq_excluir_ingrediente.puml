@@ -1,0 +1,24 @@
+@startuml
+!include _seq.iuml
+title Sequência - Excluir Ingrediente (UC10)
+actor Usuário as U
+participant "Tela Estoque" as T
+participant Servidor as S
+participant IngredienteServico as IS
+participant IngredienteDAO as D
+database SQLite as DB
+U -> T : lixeira > confirmar
+T -> S : DELETE /api/ingredientes/{id}
+S -> IS : excluir(id)
+IS -> D : produtosQueUsam(con, id)
+D -> DB : SELECT ... FROM produto_ingrediente
+alt usado em alguma receita
+  S --> T : 400 "faz parte da receita de ..."
+  T --> U : mensagem de erro
+else caso contrário
+  IS -> D : excluir(con, id)
+  D -> DB : DELETE FROM ingrediente
+  S --> T : 200 {ok}
+  T --> U : "Item excluído"
+end
+@enduml

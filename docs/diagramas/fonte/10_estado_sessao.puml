@@ -1,0 +1,18 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Estados - Usuário e Sessão
+
+[*] --> SemUsuario : banco vazio
+state "Sem usuário" as SemUsuario
+state "Deslogado" as Deslogado
+state "Logado" as Logado : sessão válida por 12 h
+state "Bloqueado" as Bloqueado : 60 segundos
+SemUsuario --> Logado : cadastrar usuário\n(senha criptografada)
+Deslogado --> Logado : login correto
+Deslogado --> Deslogado : senha errada (< 5 vezes)
+Deslogado --> Bloqueado : 5 senhas erradas seguidas
+Bloqueado --> Deslogado : após 60 s
+Logado --> Logado : alterar nome / senha
+Logado --> Deslogado : sair / sessão expirou (12 h)
+Logado --> SemUsuario : excluir usuário
+@enduml

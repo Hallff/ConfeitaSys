@@ -1,0 +1,30 @@
+@startuml
+!include _seq.iuml
+title Sequência - Excluir Venda / Devolução (UC19)
+actor Usuário as U
+participant "Tela Vendas" as T
+participant Servidor as S
+participant VendaServico as VS
+participant IngredienteDAO as ID
+participant VendaDAO as VD
+database SQLite as DB
+U -> T : lápis > Excluir
+T -> S : GET /api/vendas/{id}
+S --> T : dados do pedido
+T --> U : confirmar + "Devolver ingredientes ao estoque?"
+U -> T : confirmar (com ou sem devolução)
+T -> S : DELETE /api/vendas/{id}?devolver=sim|nao
+S -> VS : excluir(id, devolver)
+VS -> DB : BEGIN
+VS -> VD : buscar(con, id)
+opt devolver = sim
+  loop cada item
+    VS -> ID : movimentar(con, id, +quantidade)
+  end
+end
+VS -> VD : excluir(con, id)
+VD -> DB : DELETE FROM venda (itens em cascata)
+VS -> DB : COMMIT
+S --> T : 200 {ok}
+T --> U : "Pedido excluído"
+@enduml

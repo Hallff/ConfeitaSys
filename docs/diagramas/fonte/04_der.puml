@@ -1,0 +1,74 @@
+@startuml
+!include _estilo.iuml
+title Diagrama Entidade-Relacionamento (Modelo Lógico - SQLite)
+hide circle
+skinparam linetype ortho
+
+entity "usuario" as usuario {
+  * id : INTEGER <<PK>>
+  --
+  * nome : TEXT <<UNIQUE>>
+  * senha_hash : TEXT
+  * criado_em : TEXT
+}
+
+entity "ingrediente" as ingrediente {
+  * id : INTEGER <<PK>>
+  --
+  * nome : TEXT <<UNIQUE>>
+  * unidade : TEXT  ('KG' | 'L')
+  * quantidade : REAL  (>= 0)
+  * custo_unitario : REAL
+  * quantidade_alerta : REAL
+    validade : TEXT  (AAAA-MM-DD)
+  * atualizado_em : TEXT
+}
+
+entity "produto" as produto {
+  * id : INTEGER <<PK>>
+  --
+  * nome : TEXT
+  * tamanho : TEXT
+  * recheio : TEXT
+  * preco_venda : REAL
+  UNIQUE (nome, tamanho, recheio)
+}
+
+entity "produto_ingrediente" as pi {
+  * produto_id : INTEGER <<PK, FK>>
+  * ingrediente_id : INTEGER <<PK, FK>>
+  --
+  * quantidade : REAL  (> 0)
+}
+
+entity "venda" as venda {
+  * id : INTEGER <<PK>>
+  --
+  * data_hora : TEXT
+    produto_id : INTEGER <<FK>>
+  * produto_nome : TEXT
+  * valor_venda : REAL  (> 0)
+}
+
+entity "item_venda" as iv {
+  * id : INTEGER <<PK>>
+  --
+  * venda_id : INTEGER <<FK>>
+    ingrediente_id : INTEGER <<FK>>
+  * ingrediente_nome : TEXT
+  * unidade : TEXT
+  * quantidade : REAL  (> 0)
+  * custo : REAL
+}
+
+produto ||--|{ pi : "receita\n(ON DELETE CASCADE)"
+ingrediente ||--o{ pi : "usado em\n(ON DELETE RESTRICT)"
+produto |o--o{ venda : "vendido em\n(ON DELETE SET NULL)"
+venda ||--|{ iv : "contém\n(ON DELETE CASCADE)"
+ingrediente |o--o{ iv : "baixado em\n(ON DELETE SET NULL)"
+
+note right of usuario
+  Tabela independente:
+  sistema monousuário
+end note
+@enduml

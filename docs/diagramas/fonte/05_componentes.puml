@@ -1,0 +1,41 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Componentes - Frontend, Backend e Banco de Dados
+
+package "FRONTEND (navegador)" {
+  [login.html + login.js\nTela de login / primeiro acesso] as LOGIN
+  [app.html + app.js\nVendas, Produtos, Estoque,\nRelatórios, Conta] as APP
+  [Alerta global + Sirene\n(Web Audio API)] as ALERTA
+  [estilo.css] as CSS
+}
+
+package "BACKEND (Java 17 - ConfeitaSys.jar)" {
+  [Servidor\n(API REST / JSON)] as API
+  [Serviços\n(regras de negócio)] as SERV
+  [DAOs\n(SQL)] as DAO
+  [Senha\n(PBKDF2-SHA256)] as SENHA
+  [Conexao\n(transações + backup)] as CONEXAO
+}
+
+package "BANCO DE DADOS" {
+  [Driver JDBC\nsqlite-jdbc.jar] as JDBC
+  database "dados/confeitasys.db\n(SQLite)" as DB
+  folder "backup/*.db" as BKP
+}
+folder "relatorios/*.html" as REL
+
+LOGIN --> API : HTTP POST /api/login, /api/usuario
+APP --> API : HTTP GET/POST/PUT/DELETE\n/api/... (JSON)
+ALERTA --> API : GET /api/alertas (a cada 20 s)
+APP ..> ALERTA
+LOGIN ..> CSS
+APP ..> CSS
+API --> SERV
+SERV --> SENHA
+SERV --> DAO
+DAO --> CONEXAO
+CONEXAO --> JDBC
+JDBC --> DB
+CONEXAO --> BKP : VACUUM INTO
+API --> REL : salvar relatórios
+@enduml

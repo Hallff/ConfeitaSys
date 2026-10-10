@@ -1,0 +1,32 @@
+@startuml
+!include _seq.iuml
+title Sequência - Fazer Login (UC02)
+actor Usuário as U
+participant "Tela de Login" as T
+participant "Servidor" as S
+participant UsuarioServico as US
+participant Senha
+participant UsuarioDAO as D
+database SQLite as DB
+U -> T : nome e senha
+T -> S : POST /api/login
+alt bloqueado (5 erros seguidos)
+  S --> T : 429 "Aguarde N segundos"
+else caso contrário
+  S -> US : login(nome, senha)
+  US -> D : buscar(con)
+  D -> DB : SELECT ... FROM usuario
+  DB --> D : usuario (senha_hash)
+  US -> Senha : conferir(senha, hash)
+  Senha --> US : true / false
+  alt senha correta
+    S -> S : criarSessao()
+    S --> T : 200 {ok} + cookie
+    T --> U : tela de Vendas
+  else senha incorreta
+    S -> S : falhasSeguidas++
+    S --> T : 401 "Usuário ou senha incorretos"
+    T --> U : mensagem de erro
+  end
+end
+@enduml

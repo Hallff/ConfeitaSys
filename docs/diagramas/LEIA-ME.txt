@@ -1,0 +1,8 @@
+Diagramas do ConfeitaSys
+- png/    -> imagens prontas para colar no documento do estágio
+- fonte/  -> código PlantUML de cada diagrama (.puml). Para editar:
+             abra https://www.plantuml.com/plantuml, cole o conteúdo do .puml
+             (cole também o conteúdo de _estilo.iuml no lugar da linha !include),
+             ou use a extensão "PlantUML" no VS Code / IntelliJ.
+Prefixos: 01 casos de uso | 02-03 classes | 04 DER | 05 componentes | 06 implantação
+          07 navegação de telas | 08-10 estados | A atividades | S sequência

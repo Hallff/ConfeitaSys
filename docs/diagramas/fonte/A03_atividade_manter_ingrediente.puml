@@ -1,0 +1,42 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Atividades - Manter Ingrediente / Estoque (UC07 a UC10)
+|Usuário|
+start
+:Clicar no botão do armário (Estoque);
+|Sistema|
+:Listar ingredientes com quantidade, custo,\nvalor, qtd. de alerta, validade e situação;
+|Usuário|
+if (Ação?) then (incluir / alterar)
+  :Clicar "+ Novo item" ou no lápis;
+  :Informar nome;
+  :Escolher unidade (Quilogramas ou Litros);
+  :Informar quantidade e valor pago (R$);
+  :Informar quantidade de alerta;
+  :Informar data de validade;
+  :Clicar em "Salvar";
+  |Sistema|
+  if (Campos válidos?) then (não)
+    :Exibir mensagem de erro;
+    stop
+  endif
+  if (Já existe item com o mesmo nome?) then (sim)
+    :Exibir "Já existe um item chamado...";
+    stop
+  endif
+  :Calcular custo por kg/L = valor pago / quantidade;
+  :Gravar ingrediente no banco;
+  :Verificar alertas (estoque baixo / validade);
+else (excluir)
+  |Usuário|
+  :Clicar na lixeira e confirmar;
+  |Sistema|
+  if (Ingrediente faz parte de alguma receita?) then (sim)
+    :Exibir "Remova-o da receita primeiro";
+    stop
+  endif
+  :Excluir ingrediente do banco;
+endif
+:Atualizar lista do estoque;
+stop
+@enduml

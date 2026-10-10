@@ -1,0 +1,35 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Atividades - Alerta de Estoque Baixo e Validade (UC20, UC21)
+|Sistema (navegador)|
+start
+repeat
+  :Aguardar 20 s ou uma alteração\n(venda, estoque, produto);
+  |Sistema (servidor)|
+  :Ler ingredientes do banco;
+  :Selecionar itens com quantidade <= qtd. de alerta;
+  :Selecionar itens vencidos ou que vencem em até 3 dias;
+  :Montar mensagens ("O estoque de X está baixo!\nDisponível: Y (alerta em Z)");
+  |Sistema (navegador)|
+  if (Há alerta novo (não visto)?) then (sim)
+    :Exibir faixa vermelha de ALERTA no topo\n(em qualquer tela);
+    if (Há item novo com estoque baixo?) then (sim)
+      if (Som liberado pelo navegador?) then (sim)
+        :Tocar SIRENE (600 Hz <-> 1400 Hz, 4 s);
+      else (não)
+        :Aguardar 1º clique/tecla e tocar a sirene;
+      endif
+    endif
+    |Usuário|
+    if (Escolha?) then (Entendi)
+      :Marcar alerta como visto;
+    else (Ver estoque)
+      :Marcar como visto;
+      :Abrir Estoque filtrado;
+    endif
+  endif
+  |Sistema (navegador)|
+repeat while (Usuário logado?) is (sim)
+->não;
+stop
+@enduml

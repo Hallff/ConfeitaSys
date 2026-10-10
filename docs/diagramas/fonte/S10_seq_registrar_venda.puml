@@ -1,0 +1,43 @@
+@startuml
+!include _seq.iuml
+title Sequência - Registrar Venda com Baixa no Estoque (UC15)
+actor Usuário as U
+participant "Tela Vendas\n(app.js)" as T
+participant Servidor as S
+participant VendaServico as VS
+participant ProdutoDAO as PD
+participant IngredienteDAO as ID
+participant VendaDAO as VD
+database SQLite as DB
+U -> T : botão + (centro superior)
+T -> S : GET /api/ingredientes e /api/produtos
+S --> T : listas
+U -> T : escolher produto
+T -> T : preencher preço e receita;\ncalcular custo e lucro
+U -> T : "Salvar venda"
+T -> S : POST /api/vendas {produtoId, valorVenda, itens}
+S -> VS : registrar(dados)
+VS -> DB : BEGIN (transação)
+VS -> PD : buscar(con, produtoId)
+loop cada ingrediente
+  VS -> ID : buscar(con, id)
+  VS -> VS : quantidade necessária <= disponível?
+end
+alt estoque insuficiente
+  VS -> DB : ROLLBACK
+  S --> T : 400 "Estoque insuficiente de X"
+  T --> U : mensagem de erro
+else caso contrário
+  loop cada ingrediente
+    VS -> ID : movimentar(con, id, -quantidade)
+    ID -> DB : UPDATE ingrediente SET quantidade = quantidade - ?
+  end
+  VS -> VD : inserir(con, venda)
+  VD -> DB : INSERT venda + item_venda
+  VS -> DB : COMMIT
+  S --> T : 201 venda (nº do pedido, custo, lucro)
+  T --> U : "Venda #0001 registrada"
+  T -> S : GET /api/alertas
+  note right : se algum item chegou na\nqtd. de alerta: mensagem + SIRENE (S14)
+end
+@enduml

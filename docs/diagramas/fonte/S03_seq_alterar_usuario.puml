@@ -1,0 +1,34 @@
+@startuml
+!include _seq.iuml
+title Sequência - Consultar e Alterar Usuário (UC04, UC05)
+actor Usuário as U
+participant "Tela Conta\n(app.js)" as T
+participant Servidor as S
+participant UsuarioServico as US
+participant Senha
+participant UsuarioDAO as D
+database SQLite as DB
+U -> T : clicar em "Conta"
+T -> S : GET /api/usuario
+S -> US : consultar()
+US -> D : buscar(con)
+D -> DB : SELECT
+S --> T : {nome, criadoEm}
+U -> T : novo nome / nova senha + senha atual
+T -> S : PUT /api/usuario
+S -> US : alterar(dados)
+US -> D : buscar(con)
+US -> Senha : conferir(senhaAtual, hash)
+alt senha atual errada
+  US --> S : RegraException
+  S --> T : 400 "A senha atual está incorreta"
+else ok
+  opt nova senha informada
+    US -> Senha : criptografar(novaSenha)
+  end
+  US -> D : alterar(con, usuario)
+  D -> DB : UPDATE usuario
+  S --> T : 200 {nome}
+  T --> U : "Dados do usuário atualizados"
+end
+@enduml

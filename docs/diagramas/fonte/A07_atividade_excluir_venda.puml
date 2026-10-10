@@ -1,0 +1,25 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Atividades - Excluir Venda / Devolução (UC19)
+|Usuário|
+start
+:Pesquisar o pedido pelo nº da nota;
+:Clicar no lápis > "Excluir";
+|Sistema|
+:Exibir dados do pedido e pedir confirmação;
+:Exibir opção "Devolver ingredientes ao estoque";
+|Usuário|
+if (Confirma?) then (não)
+  stop
+endif
+:Marcar / desmarcar devolução ao estoque;
+|Sistema|
+:Iniciar transação;
+if (Devolver ao estoque?) then (sim)
+  :Somar ingredientes da venda ao estoque;
+endif
+:Excluir venda e itens;
+:Commit;
+:Exibir "Pedido excluído";
+stop
+@enduml

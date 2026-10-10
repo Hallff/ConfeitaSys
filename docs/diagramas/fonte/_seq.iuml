@@ -1,0 +1,3 @@
+!include _estilo.iuml
+autonumber
+skinparam responseMessageBelowArrow true

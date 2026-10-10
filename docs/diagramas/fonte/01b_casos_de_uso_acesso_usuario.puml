@@ -1,0 +1,32 @@
+@startuml
+!include _estilo.iuml
+title Casos de Uso - Acesso e Cadastro 1 (Usuário)
+left to right direction
+actor "Usuário" as U
+rectangle "Acesso / Usuário" {
+  usecase "UC01 Cadastrar usuário\n(primeiro acesso)" as UC01
+  usecase "UC02 Fazer login" as UC02
+  usecase "UC03 Sair do sistema" as UC03
+  usecase "UC04 Consultar dados\ndo usuário" as UC04
+  usecase "UC05 Alterar nome / senha" as UC05
+  usecase "UC06 Excluir usuário" as UC06
+  usecase "Criptografar senha\n(PBKDF2-SHA256 + salt)" as CRIP
+  usecase "Conferir senha" as CONF
+  usecase "Bloquear após 5\ntentativas erradas" as BLOQ
+  usecase "Criar sessão\n(cookie 12 h)" as SES
+}
+U --> UC01
+U --> UC02
+U --> UC03
+U --> UC04
+U --> UC05
+U --> UC06
+UC01 ..> CRIP : <<include>>
+UC01 ..> SES : <<include>>
+UC02 ..> CONF : <<include>>
+UC02 ..> SES : <<include>>
+BLOQ ..> UC02 : <<extend>>
+UC05 ..> CONF : <<include>>
+UC05 ..> CRIP : <<include>>
+UC06 ..> CONF : <<include>>
+@enduml

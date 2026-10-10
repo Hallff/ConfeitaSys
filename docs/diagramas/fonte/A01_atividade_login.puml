@@ -1,0 +1,41 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Atividades - Login / Primeiro Acesso (UC01, UC02)
+|Usuário|
+start
+:Abrir o sistema (iniciar.bat);
+|Sistema|
+:Abrir navegador na tela de login;
+if (Existe usuário cadastrado?) then (não)
+  |Usuário|
+  :Informar nome, senha e confirmação;
+  |Sistema|
+  if (Senha com 6+ caracteres e confirmação igual?) then (não)
+    :Exibir mensagem de erro;
+    stop
+  else (sim)
+    :Criptografar senha (PBKDF2-SHA256 + salt);
+    :Gravar usuário no banco;
+  endif
+else (sim)
+  |Usuário|
+  :Informar nome e senha;
+  |Sistema|
+  if (Bloqueado por tentativas?) then (sim)
+    :Informar tempo de espera;
+    stop
+  endif
+  if (Usuário e senha conferem?) then (não)
+    :Contar tentativa errada;
+    if (5 erros seguidos?) then (sim)
+      :Bloquear login por 60 s;
+    endif
+    :Exibir "Usuário ou senha incorretos";
+    stop
+  endif
+endif
+:Criar sessão (cookie de 12 h);
+:Abrir tela de Vendas;
+:Iniciar verificação de alertas;
+stop
+@enduml

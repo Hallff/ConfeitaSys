@@ -1,0 +1,37 @@
+@startuml
+!include _seq.iuml
+title Sequência - Gerar, Imprimir e Salvar Relatórios (UC22 a UC25)
+actor Usuário as U
+participant "Tela Relatórios" as T
+participant Servidor as S
+participant RelatorioServico as RS
+participant VendaServico as VS
+participant IngredienteServico as IS
+participant Conexao as C
+database SQLite as DB
+U -> T : abrir Relatórios (opcional), escolher data
+T -> S : GET /api/relatorios/vendas?data=
+S -> RS : vendasDoDia(data)
+RS -> VS : pesquisar(data, "")
+VS -> DB : SELECT venda, item_venda
+S --> T : totais + pedidos + ingredientes usados
+T -> S : GET /api/relatorios/estoque
+S -> RS : estoque()
+RS -> IS : listar()
+T -> S : GET /api/relatorios/faltando
+S -> RS : faltando()
+RS -> IS : listar()
+T --> U : 3 relatórios na tela
+alt Imprimir
+  U -> T : Imprimir
+  T --> U : janela de impressão do navegador
+else Salvar e fazer backup
+  U -> T : Salvar e fazer backup
+  T -> S : POST /api/relatorios/salvar {data, html}
+  S -> S : gravar relatorios/relatorios-AAAA-MM-DD.html
+  S -> C : backup()
+  C -> DB : VACUUM INTO 'backup/...db'
+  S --> T : caminhos dos arquivos
+  T --> U : "Relatórios salvos"
+end
+@enduml

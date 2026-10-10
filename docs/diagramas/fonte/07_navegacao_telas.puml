@@ -1,0 +1,53 @@
+@startuml
+!include _estilo.iuml
+title Diagrama de Navegação de Telas
+
+[*] --> TelaLogin : abrir sistema (iniciar.bat)
+
+state "Tela de Login" as TelaLogin {
+  state "Primeiro acesso\n(cadastrar usuário)" as Primeiro
+  state "Entrar\n(usuário e senha)" as Entrar
+  [*] --> Primeiro : não existe usuário
+  [*] --> Entrar : já existe usuário
+}
+
+state "Área do sistema" as Area {
+  state "Vendas\n(tela inicial)" as Vendas
+  state "Produtos\n(cardápio)" as Produtos
+  state "Estoque\n(armário)" as Estoque
+  state "Relatórios" as Relatorios
+  state "Minha conta" as Conta
+
+  state "Janela: Nova / Editar venda" as JVenda
+  state "Janela: Excluir venda" as JExVenda
+  state "Janela: Novo / Editar produto" as JProduto
+  state "Janela: Novo / Editar item" as JItem
+  state "Janela: Confirmar exclusão" as JExcluir
+  state "ALERTA de estoque baixo\n(sobrepõe qualquer tela)" as Alerta
+
+  [*] --> Vendas
+  Vendas --> JVenda : botão + / tecla N
+  Vendas --> JVenda : lápis > Editar
+  Vendas --> JExVenda : lápis > Excluir
+  Vendas --> Vendas : buscar (canto sup. direito)
+  Produtos --> JProduto : + Novo / lápis > Editar
+  Produtos --> JExcluir : lápis > Excluir
+  Estoque --> JItem : + Novo / lápis
+  Estoque --> JExcluir : lixeira
+  JVenda --> Vendas : salvar / cancelar
+  JExVenda --> Vendas
+  JProduto --> Produtos
+  JItem --> Estoque
+  Alerta --> Estoque : Ver estoque
+}
+
+Primeiro --> Vendas : usuário criado
+Entrar --> Vendas : login válido
+Entrar --> Entrar : senha incorreta
+Vendas --> Produtos : menu / tecla 2
+Vendas --> Estoque : menu / tecla 3
+Vendas --> Relatorios : menu / tecla 4
+Vendas --> Conta : menu / tecla 5
+Area --> TelaLogin : Sair / sessão expirada
+Conta --> TelaLogin : Excluir usuário
+@enduml

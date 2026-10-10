@@ -1,0 +1,38 @@
+@startuml
+!include _seq.iuml
+title Sequência - Editar Venda (UC18)
+actor Usuário as U
+participant "Tela Vendas" as T
+participant Servidor as S
+participant VendaServico as VS
+participant IngredienteDAO as ID
+participant VendaDAO as VD
+database SQLite as DB
+U -> T : lápis > Editar
+T -> S : GET /api/vendas/{id}
+S -> VS : consultar(id)
+VS -> VD : buscar(con, id)
+S --> T : venda + itens
+U -> T : alterar produto / valor / ingredientes
+T -> S : PUT /api/vendas/{id}
+S -> VS : editar(id, dados)
+VS -> DB : BEGIN
+VS -> VS : disponível = estoque + uso antigo da venda
+alt insuficiente
+  VS -> DB : ROLLBACK
+  S --> T : 400 "Estoque insuficiente"
+else caso contrário
+  loop itens antigos
+    VS -> ID : movimentar(con, id, +quantidade)
+  end
+  loop itens novos
+    VS -> ID : movimentar(con, id, -quantidade)
+  end
+  VS -> VD : alterar(con, venda)
+  VD -> DB : UPDATE venda; DELETE/INSERT item_venda
+  VS -> DB : COMMIT
+  S --> T : 200 venda
+  T --> U : "Pedido atualizado"
+  T -> S : GET /api/alertas
+end
+@enduml

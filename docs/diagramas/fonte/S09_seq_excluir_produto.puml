@@ -2,21 +2,21 @@
 !include _seq.iuml
 title Sequência - Consultar e Excluir Produto (UC12, UC14)
 actor Usuário as U
-participant "Tela Produtos" as T
-participant Servidor as S
+participant "Tela Produtos\n(app.js → api.js)" as T
+participant "ProdutoControle\n(API REST)" as S
 participant ProdutoServico as PS
 participant ProdutoDAO as PD
-database SQLite as DB
+database "PostgreSQL" as DB
 U -> T : abrir Produtos
-T -> S : GET /api/produtos
+T -> S : API 4.1  GET /api/produtos\n→ ProdutoControle.listar()
 S -> PS : listar()
-PS -> PD : listar(con)
+PS -> PD : listar()
 PD -> DB : SELECT produto + receita
 S --> T : produtos com custo e lucro estimado
 U -> T : lápis > Excluir > confirmar
-T -> S : DELETE /api/produtos/{id}
+T -> S : API 4.5  DELETE /api/produtos/{id}\n→ ProdutoControle.excluir()
 S -> PS : excluir(id)
-PS -> PD : excluir(con, id)
+PS -> PD : excluir(id)
 PD -> DB : DELETE FROM produto\n(receita apagada em cascata;\nvendas: produto_id = NULL)
 S --> T : 200 {ok}
 T --> U : "Produto excluído"

@@ -1,64 +1,65 @@
 @startuml
 !include _estilo.iuml
-title Diagrama Entidade-Relacionamento (Modelo Lógico - SQLite)
+title Diagrama Entidade-Relacionamento (Modelo Lógico - PostgreSQL)
 hide circle
 skinparam linetype ortho
 
 entity "usuario" as usuario {
-  * id : INTEGER <<PK>>
+  * id : UUID <<PK>> = gen_random_uuid()
   --
-  * nome : TEXT <<UNIQUE>>
-  * senha_hash : TEXT
-  * criado_em : TEXT
+  * nome : VARCHAR(60) <<UNIQUE>>
+  * senha_hash : VARCHAR(200)
+  * criado_em : TIMESTAMP
 }
 
 entity "ingrediente" as ingrediente {
-  * id : INTEGER <<PK>>
+  * id : UUID <<PK>> = gen_random_uuid()
   --
-  * nome : TEXT <<UNIQUE>>
-  * unidade : TEXT  ('KG' | 'L')
-  * quantidade : REAL  (>= 0)
-  * custo_unitario : REAL
-  * quantidade_alerta : REAL
-    validade : TEXT  (AAAA-MM-DD)
-  * atualizado_em : TEXT
+  * nome : VARCHAR(80) <<UNIQUE>>
+  * unidade : VARCHAR(2)  ('KG' | 'L')
+  * quantidade : NUMERIC(12,3)  (>= 0)
+  * custo_unitario : NUMERIC(14,6)
+  * quantidade_alerta : NUMERIC(12,3)
+    validade : DATE
+  * atualizado_em : TIMESTAMP
 }
 
 entity "produto" as produto {
-  * id : INTEGER <<PK>>
+  * id : UUID <<PK>> = gen_random_uuid()
   --
-  * nome : TEXT
-  * tamanho : TEXT
-  * recheio : TEXT
-  * preco_venda : REAL
+  * nome : VARCHAR(80)
+  * tamanho : VARCHAR(20)
+  * recheio : VARCHAR(60)
+  * preco_venda : NUMERIC(10,2)  (> 0)
   UNIQUE (nome, tamanho, recheio)
 }
 
 entity "produto_ingrediente" as pi {
-  * produto_id : INTEGER <<PK, FK>>
-  * ingrediente_id : INTEGER <<PK, FK>>
+  * produto_id : UUID <<PK, FK>>
+  * ingrediente_id : UUID <<PK, FK>>
   --
-  * quantidade : REAL  (> 0)
+  * quantidade : NUMERIC(12,4)  (> 0)
 }
 
 entity "venda" as venda {
-  * id : INTEGER <<PK>>
+  * id : UUID <<PK>> = gen_random_uuid()
   --
-  * data_hora : TEXT
-    produto_id : INTEGER <<FK>>
-  * produto_nome : TEXT
-  * valor_venda : REAL  (> 0)
+  * numero : INTEGER <<UNIQUE, IDENTITY>>  (nº do pedido)
+  * data_hora : TIMESTAMP
+    produto_id : UUID <<FK>>
+  * produto_nome : VARCHAR(170)
+  * valor_venda : NUMERIC(10,2)  (> 0)
 }
 
 entity "item_venda" as iv {
-  * id : INTEGER <<PK>>
+  * id : UUID <<PK>> = gen_random_uuid()
   --
-  * venda_id : INTEGER <<FK>>
-    ingrediente_id : INTEGER <<FK>>
-  * ingrediente_nome : TEXT
-  * unidade : TEXT
-  * quantidade : REAL  (> 0)
-  * custo : REAL
+  * venda_id : UUID <<FK>>
+    ingrediente_id : UUID <<FK>>
+  * ingrediente_nome : VARCHAR(80)
+  * unidade : VARCHAR(2)
+  * quantidade : NUMERIC(12,4)  (> 0)
+  * custo : NUMERIC(12,2)
 }
 
 produto ||--|{ pi : "receita\n(ON DELETE CASCADE)"
@@ -68,7 +69,12 @@ venda ||--|{ iv : "contém\n(ON DELETE CASCADE)"
 ingrediente |o--o{ iv : "baixado em\n(ON DELETE SET NULL)"
 
 note right of usuario
-  Tabela independente:
-  sistema monousuário
+  Chaves primárias: UUID
+  gerados pelo banco
+  (gen_random_uuid()).
+
+  Tabela independente.
+  Sistema monousuário:
+  índice único garante 1 linha.
 end note
 @enduml

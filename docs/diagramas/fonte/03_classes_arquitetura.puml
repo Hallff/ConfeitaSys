@@ -1,128 +1,121 @@
 @startuml
 !include _estilo.iuml
-title Diagrama de Classes - Arquitetura em Camadas
+title Diagrama de Classes - Arquitetura em Camadas (backend Spring Boot)
 hide circle
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
+skinparam nodesep 25
+skinparam ranksep 40
 
-package "confeitasys" {
-  class Main {
-    + main(args : String[]) : void
-    - abrirNavegador(endereco : String) : void
+package "controle  (API REST - uma classe por grupo do Swagger)" as C {
+  class AcessoControle <<@RestController>> {
+    1.1 POST /api/login
+    1.2 POST /api/logout
+    1.3 GET /api/status
+  }
+  class UsuarioControle <<@RestController>> {
+    2.1-2.4 /api/usuario
+    GET | PUT | POST | DELETE
+  }
+  class IngredienteControle <<@RestController>> {
+    3.1-3.4 /api/ingredientes
+  }
+  class ProdutoControle <<@RestController>> {
+    4.1-4.5 /api/produtos
+  }
+  class VendaControle <<@RestController>> {
+    5.1-5.5 /api/vendas
+    + registrar(VendaRequisicao) : VendaResposta
+  }
+  class AlertaControle <<@RestController>> {
+    6.1 GET /api/alertas
+  }
+  class RelatorioControle <<@RestController>> {
+    7.1-7.3 /api/relatorios/*
+  }
+  class BackupControle <<@RestController>> {
+    8.1 POST /api/backup
+    8.2 POST /api/relatorios/salvar
   }
 }
 
-package "confeitasys.controle  (API REST)" {
-  class Servidor {
-    - sessoes : Map<String, Instant>
-    - falhasSeguidas : int
-    + iniciar() : void
-    - tratarApi(ex) : void
-    - rotasUsuario(...) / rotasIngredientes(...)
-    - rotasProdutos(...) / rotasVendas(...)
-    - rotasRelatorios(...)
-    - login(ex) : void
-    - criarSessao(ex) / logado(ex) : boolean
-    - tratarArquivo(ex) : void
+package "seguranca" as SEG {
+  class AutenticacaoInterceptor {
+    + preHandle(req, resp, handler) : boolean
   }
-}
-
-package "confeitasys.servico  (Regras de negócio)" {
-  class UsuarioServico {
-    + existeUsuario() : boolean
-    + cadastrar(dados) : void
-    + login(nome, senha) : boolean
-    + consultar() : Usuario
-    + alterar(dados) : Usuario
-    + excluir(dados) : void
+  class Sessoes {
+    + criar() : String
+    + valido(token) : boolean
+    + encerrar(token) : void
   }
-  class IngredienteServico {
-    + listar() : List<Ingrediente>
-    + incluir(dados) : Ingrediente
-    + alterar(id, dados) : Ingrediente
-    + excluir(id) : void
-    + alertas() : Map
-  }
-  class ProdutoServico {
-    + listar() : List<Produto>
-    + consultar(id) : Produto
-    + incluir(dados) : Produto
-    + alterar(id, dados) : Produto
-    + excluir(id) : void
-  }
-  class VendaServico {
-    + pesquisar(data, busca) : List<Venda>
-    + consultar(id) : Venda
-    + registrar(dados) : Venda
-    + editar(id, dados) : Venda
-    + excluir(id, devolver) : void
-  }
-  class RelatorioServico {
-    + vendasDoDia(data) : Map
-    + estoque() : Map
-    + faltando() : Map
-  }
-}
-
-package "confeitasys.dao  (Acesso ao banco)" {
-  class Conexao {
-    - con : Connection
-    + executar(trabalho) : T
-    + backup() : String
-    - criarTabelas() : void
-  }
-  class UsuarioDAO {
-    + buscar(con) / inserir / alterar / excluir
-  }
-  class IngredienteDAO {
-    + listar / buscar / buscarPorNome
-    + inserir / alterar / excluir
-    + movimentar(con, id, delta, quando)
-    + produtosQueUsam(con, id)
-  }
-  class ProdutoDAO {
-    + listar / buscar / existe
-    + inserir / alterar / excluir
-  }
-  class VendaDAO {
-    + listar(con, data) / buscar
-    + inserir / alterar / excluir
-  }
-}
-
-package "confeitasys.util" {
   class Senha {
     + {static} criptografar(senha) : String
     + {static} conferir(senha, hash) : boolean
   }
-  class Json
-  class Util
-  class RegraException
 }
 
-class "SQLite - confeitasys.db" as DB <<banco de dados>>
+package "servico  (regras de negócio + @Transactional)" as S {
+  class UsuarioServico {
+    + cadastrar / login / consultar
+    + alterar / excluir
+  }
+  class IngredienteServico {
+    + listar / incluir / alterar / excluir
+    + alertas() : AlertasResposta
+  }
+  class ProdutoServico {
+    + listar / consultar / incluir
+    + alterar / excluir
+  }
+  class VendaServico {
+    + pesquisar(data, busca)
+    + registrar / editar / excluir
+  }
+  class RelatorioServico {
+    + vendasDoDia / estoque / faltando
+    + salvarHtml(data, html)
+  }
+  class BackupServico {
+    + fazerBackup() : String
+  }
+}
 
-Main --> Conexao : cria
-Main --> Servidor : inicia
-Servidor --> UsuarioServico
-Servidor --> IngredienteServico
-Servidor --> ProdutoServico
-Servidor --> VendaServico
-Servidor --> RelatorioServico
-Servidor ..> Json
-RelatorioServico --> VendaServico
-RelatorioServico --> IngredienteServico
-UsuarioServico --> UsuarioDAO
+package "dao  (SQL com JdbcTemplate)" as D {
+  class UsuarioDAO
+  class IngredienteDAO {
+    + buscarParaAtualizar(id)  // FOR UPDATE
+    + movimentar(id, delta, quando)
+  }
+  class ProdutoDAO
+  class VendaDAO
+}
+
+class "PostgreSQL - banco confeitasys" as DB <<banco de dados>>
+
+AutenticacaoInterceptor ..> Sessoes : confere o token\nem /api/**
+AcessoControle --> UsuarioServico
+AcessoControle --> Sessoes
+UsuarioControle --> UsuarioServico
+IngredienteControle --> IngredienteServico
+ProdutoControle --> ProdutoServico
+VendaControle --> VendaServico
+AlertaControle --> IngredienteServico
+RelatorioControle --> RelatorioServico
+BackupControle --> BackupServico
+BackupControle --> RelatorioServico
 UsuarioServico ..> Senha
+UsuarioServico --> UsuarioDAO
 IngredienteServico --> IngredienteDAO
 ProdutoServico --> ProdutoDAO
 ProdutoServico --> IngredienteDAO
 VendaServico --> VendaDAO
 VendaServico --> ProdutoDAO
 VendaServico --> IngredienteDAO
-UsuarioServico --> Conexao
-IngredienteServico --> Conexao
-ProdutoServico --> Conexao
-VendaServico --> Conexao
-Conexao --> DB : JDBC
+RelatorioServico --> VendaServico
+RelatorioServico --> IngredienteServico
+UsuarioDAO --> DB : JDBC
+IngredienteDAO --> DB : JDBC
+ProdutoDAO --> DB : JDBC
+VendaDAO --> DB : JDBC
+BackupServico --> DB : JDBC
 @enduml

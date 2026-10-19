@@ -2,24 +2,24 @@
 !include _seq.iuml
 title Sequência - Consultar e Alterar Ingrediente (UC08, UC09)
 actor Usuário as U
-participant "Tela Estoque" as T
-participant Servidor as S
+participant "Tela Estoque\n(app.js → api.js)" as T
+participant "IngredienteControle\n(API REST)" as S
 participant IngredienteServico as IS
 participant IngredienteDAO as D
-database SQLite as DB
+database "PostgreSQL" as DB
 U -> T : abrir Estoque
-T -> S : GET /api/ingredientes
+T -> S : API 3.1  GET /api/ingredientes\n→ IngredienteControle.listar()
 S -> IS : listar()
-IS -> D : listar(con)
+IS -> D : listar()
 D -> DB : SELECT ... ORDER BY nome
 S --> T : lista (com estoqueBaixo, vencido...)
 T --> U : tabela + filtros (todos / estoque baixo / validade)
 U -> T : lápis > alterar dados (ex.: repor estoque)
-T -> S : PUT /api/ingredientes/{id}
+T -> S : API 3.3  PUT /api/ingredientes/{id}\n→ IngredienteControle.alterar()
 S -> IS : alterar(id, dados)
-IS -> D : buscar(con, id)
-IS -> D : buscarPorNome(con, nome)
-IS -> D : alterar(con, ingrediente)
+IS -> D : buscar(id)
+IS -> D : buscarPorNome(nome)
+IS -> D : alterar(ingrediente)
 D -> DB : UPDATE ingrediente
 S --> T : 200 ingrediente
 T --> U : "Item atualizado"

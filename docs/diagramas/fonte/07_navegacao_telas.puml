@@ -2,7 +2,7 @@
 !include _estilo.iuml
 title Diagrama de Navegação de Telas
 
-[*] --> TelaLogin : abrir sistema (iniciar.bat)
+[*] --> TelaLogin : abrir sistema (INICIAR-SISTEMA.bat)
 
 state "Tela de Login" as TelaLogin {
   state "Primeiro acesso\n(cadastrar usuário)" as Primeiro

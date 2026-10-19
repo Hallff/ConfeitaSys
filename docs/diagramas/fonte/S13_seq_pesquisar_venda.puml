@@ -2,19 +2,19 @@
 !include _seq.iuml
 title Sequência - Pesquisar Venda e Ver Ingredientes (UC16, UC17)
 actor Usuário as U
-participant "Tela Vendas" as T
-participant Servidor as S
+participant "Tela Vendas\n(app.js → api.js)" as T
+participant "VendaControle\n(API REST)" as S
 participant VendaServico as VS
 participant VendaDAO as VD
-database SQLite as DB
+database "PostgreSQL" as DB
 U -> T : digitar na busca (canto superior direito)
-T -> S : GET /api/vendas?data=AAAA-MM-DD&busca=texto
+T -> S : API 5.1  GET /api/vendas?data=AAAA-MM-DD&busca=texto\n→ VendaControle.pesquisar()
 S -> VS : pesquisar(data, busca)
 alt busca é nº do pedido (12 ou #12)
-  VS -> VD : buscar(con, 12)
+  VS -> VD : buscar(12)
   VD -> DB : SELECT ... WHERE id = 12
 else busca é hora (14h / 14:30) ou nome
-  VS -> VD : listar(con, data)
+  VS -> VD : listar(data)
   VD -> DB : SELECT ... WHERE data = ?
   VS -> VS : filtrar por hora ou nome\n(sem acento / maiúscula)
 end

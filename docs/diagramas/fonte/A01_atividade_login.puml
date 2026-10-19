@@ -3,7 +3,7 @@
 title Diagrama de Atividades - Login / Primeiro Acesso (UC01, UC02)
 |Usuário|
 start
-:Abrir o sistema (iniciar.bat);
+:Abrir o sistema (INICIAR-SISTEMA.bat);
 |Sistema|
 :Abrir navegador na tela de login;
 if (Existe usuário cadastrado?) then (não)
@@ -34,7 +34,7 @@ else (sim)
     stop
   endif
 endif
-:Criar sessão (cookie de 12 h);
+:Criar token de login (vale 12 h)\ne enviar ao navegador;
 :Abrir tela de Vendas;
 :Iniciar verificação de alertas;
 stop

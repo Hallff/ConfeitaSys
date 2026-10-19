@@ -2,29 +2,30 @@
 !include _seq.iuml
 title Sequência - Cadastrar Usuário no Primeiro Acesso (UC01)
 actor Usuário as U
-participant "Tela de Login\n(login.js)" as T
-participant "Servidor\n(API REST)" as S
+participant "Tela de Login\n(login.js → api.js)" as T
+participant "API REST\nAcessoControle\nUsuarioControle" as S
 participant UsuarioServico as US
 participant Senha
 participant UsuarioDAO as D
-database "SQLite" as DB
+database "PostgreSQL" as DB
 U -> T : abrir sistema
-T -> S : GET /api/status
+T -> S : API 1.3  GET /api/status\n→ AcessoControle.status()
 S -> US : existeUsuario()
-US -> D : buscar(con)
+US -> D : buscar()
 D -> DB : SELECT ... FROM usuario
 DB --> D : nenhum registro
 S --> T : {temUsuario: false}
 T --> U : mostrar formulário de primeiro acesso
 U -> T : nome, senha, confirmação
 T -> T : validar (6+ caracteres, confirmação)
-T -> S : POST /api/usuario {nome, senha}
+T -> S : API 2.3  POST /api/usuario {nome, senha}\n→ UsuarioControle.cadastrar()
 S -> US : cadastrar(dados)
 US -> Senha : criptografar(senha)
 Senha --> US : "pbkdf2_sha256$210000$salt$hash"
-US -> D : inserir(con, usuario)
+US -> D : inserir(usuario)
 D -> DB : INSERT INTO usuario
-S -> S : criarSessao() (cookie HttpOnly)
-S --> T : 201 {ok: true}
+S -> S : Sessoes.criar() → token (vale 12 h)
+S --> T : 201 {ok, token, nome}
+T -> T : guardar token (localStorage)
 T --> U : abrir tela de Vendas
 @enduml

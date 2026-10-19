@@ -1,41 +1,44 @@
 @startuml
 !include _estilo.iuml
-title Diagrama de Componentes - Frontend, Backend e Banco de Dados
+title Diagrama de Componentes - Frontend, Backend (API) e Banco de Dados
 
-package "FRONTEND (navegador)" {
-  [login.html + login.js\nTela de login / primeiro acesso] as LOGIN
-  [app.html + app.js\nVendas, Produtos, Estoque,\nRelatórios, Conta] as APP
+package "FRONTEND - pasta frontend/ (navegador, localhost:5500)" {
+  [index.html + js/login.js\nLogin / primeiro acesso] as LOGIN
+  [app.html + js/app.js\nVendas, Produtos, Estoque,\nRelatórios, Conta] as APP
   [Alerta global + Sirene\n(Web Audio API)] as ALERTA
-  [estilo.css] as CSS
+  [js/api.js\nTODAS as chamadas à API\n(uma função por API numerada)] as APIJS
+  [ServidorFrontend.java\nentrega os arquivos] as SF
 }
 
-package "BACKEND (Java 17 - ConfeitaSys.jar)" {
-  [Servidor\n(API REST / JSON)] as API
-  [Serviços\n(regras de negócio)] as SERV
-  [DAOs\n(SQL)] as DAO
-  [Senha\n(PBKDF2-SHA256)] as SENHA
-  [Conexao\n(transações + backup)] as CONEXAO
+package "BACKEND - pasta backend/ (Spring Boot, localhost:8080)" {
+  [Swagger UI + OpenAPI\n/swagger-ui.html] as SW
+  [AutenticacaoInterceptor\n(confere o token)] as INT
+  [controle/\n8 classes *Controle\n27 APIs REST (JSON)] as CTRL
+  [servico/\nregras + transações] as SERV
+  [dao/\nSQL (JdbcTemplate)] as DAO
+  [seguranca/\nSenha PBKDF2, Sessoes (token)] as SEG
 }
 
-package "BANCO DE DADOS" {
-  [Driver JDBC\nsqlite-jdbc.jar] as JDBC
-  database "dados/confeitasys.db\n(SQLite)" as DB
-  folder "backup/*.db" as BKP
+package "BANCO DE DADOS - pasta banco/ (localhost:5432)" {
+  [Driver JDBC PostgreSQL\n+ pool HikariCP] as JDBC
+  database "PostgreSQL\nbanco confeitasys\n6 tabelas + 2 views" as DB
 }
-folder "relatorios/*.html" as REL
+folder "backend/backup/*.sql" as BKP
+folder "backend/relatorios/*.html" as REL
 
-LOGIN --> API : HTTP POST /api/login, /api/usuario
-APP --> API : HTTP GET/POST/PUT/DELETE\n/api/... (JSON)
-ALERTA --> API : GET /api/alertas (a cada 20 s)
-APP ..> ALERTA
-LOGIN ..> CSS
-APP ..> CSS
-API --> SERV
-SERV --> SENHA
+SF ..> LOGIN
+SF ..> APP
+LOGIN --> APIJS
+APP --> APIJS
+ALERTA --> APIJS : 6.1 a cada 20 s
+APIJS --> INT : HTTP + JSON\nAuthorization: Bearer token
+SW --> INT : testar as APIs
+INT --> CTRL
+CTRL --> SERV
+SERV --> SEG
 SERV --> DAO
-DAO --> CONEXAO
-CONEXAO --> JDBC
+DAO --> JDBC
 JDBC --> DB
-CONEXAO --> BKP : VACUUM INTO
-API --> REL : salvar relatórios
+SERV --> BKP : 8.1 backup
+SERV --> REL : 8.2 salvar relatórios
 @enduml

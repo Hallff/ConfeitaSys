@@ -2,16 +2,16 @@
 !include _seq.iuml
 title Sequência - Alerta de Estoque Baixo com Sirene (UC20, UC21)
 actor Usuário as U
-participant "Qualquer tela\n(app.js)" as T
+participant "Qualquer tela\n(app.js → api.js)" as T
 participant "Sirene\n(Web Audio API)" as SI
-participant Servidor as S
+participant "API REST\nAlertaControle\nIngredienteControle" as S
 participant IngredienteServico as IS
 participant IngredienteDAO as D
-database SQLite as DB
+database "PostgreSQL" as DB
 loop a cada 20 s e após qualquer alteração
-  T -> S : GET /api/alertas
+  T -> S : API 6.1  GET /api/alertas\n→ AlertaControle.alertas()
   S -> IS : alertas()
-  IS -> D : listar(con)
+  IS -> D : listar()
   D -> DB : SELECT ... FROM ingrediente
   IS -> IS : estoqueBaixo(): quantidade <= quantidadeAlerta\nvencido() / venceLogo()
   S --> T : {estoqueBaixo:[mensagens], validade:[mensagens]}
@@ -27,7 +27,7 @@ loop a cada 20 s e após qualquer alteração
       T -> T : gravar alerta como visto
     else Usuário clica "Ver estoque"
       U -> T : Ver estoque
-      T -> S : GET /api/ingredientes
+      T -> S : API 3.1  GET /api/ingredientes\n→ IngredienteControle.listar()
       T --> U : Estoque filtrado (estoque baixo)
     end
   end

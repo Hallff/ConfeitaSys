@@ -6,13 +6,13 @@ start
 if (Ação?) then (Backup)
   :Clicar em "Backup" na lateral;
   |Sistema|
-  :Executar VACUUM INTO\n'backup/confeitasys-AAAAMMDD-HHMMSS.db';
+  :Gerar backup/confeitasys-AAAAMMDD-HHMMSS.sql\n(INSERT de todas as tabelas);
   :Exibir caminho do arquivo de backup;
 else (Sair)
   |Usuário|
   :Clicar em "Sair";
   |Sistema|
-  :Apagar sessão e cookie;
+  :Invalidar o token e apagá-lo do navegador;
   :Abrir tela de login;
 endif
 stop

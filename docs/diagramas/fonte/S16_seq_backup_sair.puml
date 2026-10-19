@@ -2,21 +2,23 @@
 !include _seq.iuml
 title Sequência - Backup e Sair (UC26, UC03)
 actor Usuário as U
-participant "Tela (app.js)" as T
-participant Servidor as S
-participant Conexao as C
-database SQLite as DB
+participant "Tela (app.js → api.js)" as T
+participant "API REST\nBackupControle\nAcessoControle" as S
+participant BackupServico as C
+database "PostgreSQL" as DB
 == Backup ==
 U -> T : clicar em "Backup"
-T -> S : POST /api/backup
-S -> C : backup()
-C -> DB : VACUUM INTO 'backup/confeitasys-AAAAMMDD-HHMMSS.db'
+T -> S : API 8.1  POST /api/backup\n→ BackupControle.fazerBackup()
+S -> C : fazerBackup()
+C -> DB : SELECT * de cada tabela\n(uma transação, foto consistente)
+C -> C : gravar backup/confeitasys-AAAAMMDD-HHMMSS.sql\n(comandos INSERT)
 S --> T : {arquivo}
 T --> U : "Backup salvo em ..."
 == Sair ==
 U -> T : clicar em "Sair"
-T -> S : POST /api/logout
-S -> S : remover sessão + apagar cookie
+T -> S : API 1.2  POST /api/logout\n→ AcessoControle.logout()
+S -> S : Sessoes.encerrar(token)
 S --> T : 200 {ok}
+T -> T : apagar token (localStorage)
 T --> U : tela de login
 @enduml

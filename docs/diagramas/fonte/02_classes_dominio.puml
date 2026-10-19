@@ -1,38 +1,38 @@
 @startuml
 !include _estilo.iuml
-title Diagrama de Classes - Domínio (pacote confeitasys.modelo)
+title Diagrama de Classes - Domínio (pacote br.com.confeitasys.modelo)
 hide circle
 skinparam classAttributeIconSize 0
 
 class Usuario <<Cadastro 1>> {
-  - id : int
+  - id : UUID
   - nome : String
   - senhaHash : String
-  - criadoEm : String
+  - criadoEm : LocalDateTime
   --
-  + paraTela() : Map
+  + paraResposta() : UsuarioResposta
 }
 
 class Ingrediente <<Cadastro 2>> {
-  - id : int
+  - id : UUID
   - nome : String
   - unidade : String  {KG | L}
   - quantidade : double
   - custoUnitario : double
   - quantidadeAlerta : double
-  - validade : String
-  - atualizadoEm : String
+  - validade : LocalDate
+  - atualizadoEm : LocalDateTime
   --
   + valorEmEstoque() : double
   + estoqueBaixo() : boolean
   + diasParaVencer() : Long
   + vencido() : boolean
   + venceLogo() : boolean
-  + paraTela() : Map
+  + paraResposta() : IngredienteResposta
 }
 
 class Produto <<Cadastro 3>> {
-  - id : int
+  - id : UUID
   - nome : String
   - tamanho : String
   - recheio : String
@@ -40,11 +40,11 @@ class Produto <<Cadastro 3>> {
   --
   + nomeCompleto() : String
   + custoEstimado() : double
-  + paraTela() : Map
+  + paraResposta() : ProdutoResposta
 }
 
 class ItemReceita {
-  - ingredienteId : int
+  - ingredienteId : UUID
   - ingredienteNome : String
   - unidade : String
   - quantidade : double
@@ -54,9 +54,10 @@ class ItemReceita {
 }
 
 class Venda <<Movimento>> {
-  - id : int
-  - dataHora : String
-  - produtoId : Integer
+  - id : UUID
+  - numero : int  {nº do pedido}
+  - dataHora : LocalDateTime
+  - produtoId : UUID
   - produtoNome : String
   - valorVenda : double
   --
@@ -64,11 +65,11 @@ class Venda <<Movimento>> {
   + lucro() : double
   + data() : String
   + hora() : String
-  + paraTela() : Map
+  + paraResposta() : VendaResposta
 }
 
 class ItemVenda {
-  - ingredienteId : Integer
+  - ingredienteId : UUID
   - nome : String
   - unidade : String
   - quantidade : double
@@ -81,6 +82,11 @@ Venda "1" *-- "1..*" ItemVenda : itens >
 ItemVenda "0..*" --> "0..1" Ingrediente : baixa no estoque >
 Venda "0..*" --> "0..1" Produto : vende >
 Usuario ..> Venda : registra >
+
+note top of Venda
+  id = chave (UUID, gerado pelo banco)
+  numero = nº do pedido na nota (#0012)
+end note
 
 note bottom of Ingrediente
   estoqueBaixo() = quantidade <= quantidadeAlerta

@@ -2,21 +2,21 @@
 !include _seq.iuml
 title Sequência - Excluir Ingrediente (UC10)
 actor Usuário as U
-participant "Tela Estoque" as T
-participant Servidor as S
+participant "Tela Estoque\n(app.js → api.js)" as T
+participant "IngredienteControle\n(API REST)" as S
 participant IngredienteServico as IS
 participant IngredienteDAO as D
-database SQLite as DB
+database "PostgreSQL" as DB
 U -> T : lixeira > confirmar
-T -> S : DELETE /api/ingredientes/{id}
+T -> S : API 3.4  DELETE /api/ingredientes/{id}\n→ IngredienteControle.excluir()
 S -> IS : excluir(id)
-IS -> D : produtosQueUsam(con, id)
+IS -> D : produtosQueUsam(id)
 D -> DB : SELECT ... FROM produto_ingrediente
 alt usado em alguma receita
   S --> T : 400 "faz parte da receita de ..."
   T --> U : mensagem de erro
 else caso contrário
-  IS -> D : excluir(con, id)
+  IS -> D : excluir(id)
   D -> DB : DELETE FROM ingrediente
   S --> T : 200 {ok}
   T --> U : "Item excluído"

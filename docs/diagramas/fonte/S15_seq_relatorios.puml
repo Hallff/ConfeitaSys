@@ -2,23 +2,23 @@
 !include _seq.iuml
 title Sequência - Gerar, Imprimir e Salvar Relatórios (UC22 a UC25)
 actor Usuário as U
-participant "Tela Relatórios" as T
-participant Servidor as S
+participant "Tela Relatórios\n(app.js → api.js)" as T
+participant "API REST\nRelatorioControle\nBackupControle" as S
 participant RelatorioServico as RS
 participant VendaServico as VS
 participant IngredienteServico as IS
-participant Conexao as C
-database SQLite as DB
+participant BackupServico as C
+database "PostgreSQL" as DB
 U -> T : abrir Relatórios (opcional), escolher data
-T -> S : GET /api/relatorios/vendas?data=
+T -> S : API 7.3  GET /api/relatorios/vendas?data=\n→ RelatorioControle.vendas()
 S -> RS : vendasDoDia(data)
 RS -> VS : pesquisar(data, "")
 VS -> DB : SELECT venda, item_venda
 S --> T : totais + pedidos + ingredientes usados
-T -> S : GET /api/relatorios/estoque
+T -> S : API 7.1  GET /api/relatorios/estoque\n→ RelatorioControle.estoque()
 S -> RS : estoque()
 RS -> IS : listar()
-T -> S : GET /api/relatorios/faltando
+T -> S : API 7.2  GET /api/relatorios/faltando\n→ RelatorioControle.faltando()
 S -> RS : faltando()
 RS -> IS : listar()
 T --> U : 3 relatórios na tela
@@ -27,10 +27,11 @@ alt Imprimir
   T --> U : janela de impressão do navegador
 else Salvar e fazer backup
   U -> T : Salvar e fazer backup
-  T -> S : POST /api/relatorios/salvar {data, html}
-  S -> S : gravar relatorios/relatorios-AAAA-MM-DD.html
-  S -> C : backup()
-  C -> DB : VACUUM INTO 'backup/...db'
+  T -> S : API 8.2  POST /api/relatorios/salvar {data, html}\n→ BackupControle.salvarRelatorios()
+  S -> S : RelatorioServico.salvarHtml()\nrelatorios/relatorios-AAAA-MM-DD.html
+  S -> C : fazerBackup()
+  C -> DB : SELECT * de cada tabela
+C -> C : gravar backup/...sql (INSERTs)
   S --> T : caminhos dos arquivos
   T --> U : "Relatórios salvos"
 end

@@ -2,30 +2,37 @@
 !include _estilo.iuml
 title Diagrama de Implantação
 
-node "Computador da padaria\n(Windows 8 / 10 / 11)" as PC {
-  node "Navegador\n(Chrome / Edge / Firefox)" as NAV {
-    artifact "Telas HTML/CSS/JS" as TELAS
+node "Computador da confeitaria (Windows 10 / 11)" as PC {
+  node "Navegador (Chrome / Edge / Firefox)" as NAV {
+    artifact "Telas HTML/CSS/JS\n(localhost:5500)" as TELAS
+    artifact "Swagger UI\n(localhost:8080/swagger-ui.html)" as SWG
   }
-  node "Java 17+ (JRE/JDK)" as JVM {
-    artifact "ConfeitaSys.jar\n(servidor em 127.0.0.1:8080)" as JAR
-    artifact "lib/sqlite-jdbc-3.46.1.3.jar" as DRV
+  node "Java 17 - processo 1" as J1 {
+    artifact "ServidorFrontend.java\nporta 5500" as SF
   }
-  folder "Pasta do sistema" {
-    database "dados/confeitasys.db" as DB
-    folder "backup/" as B
-    folder "relatorios/" as R
+  node "Java 17 - processo 2" as J2 {
+    artifact "API ConfeitaSys (Spring Boot)\nTomcat embutido, porta 8080" as API
+    artifact "postgresql JDBC driver" as DRV
   }
-  artifact "iniciar.bat" as BAT
+  node "Serviço do Windows: PostgreSQL" as PGN {
+    database "banco confeitasys\nporta 5432" as DB
+  }
+  folder "backend/backup/  backend/relatorios/" as PASTAS
+  artifact "INICIAR-SISTEMA.bat\n(banco → API → telas)" as BAT
 }
 
-BAT --> JAR : java -jar
-NAV --> JAR : HTTP (localhost)
-JAR --> DRV
-DRV --> DB : JDBC
-JAR --> B
-JAR --> R
+BAT ..> PGN : iniciar-banco.bat
+BAT ..> J2 : iniciar-backend.bat
+BAT ..> J1 : iniciar-frontend.bat
+SF --> TELAS : arquivos estáticos
+TELAS --> API : HTTP/JSON + token
+SWG --> API : HTTP/JSON + token
+API --> DRV
+DRV --> DB : JDBC (TCP 5432)
+API --> PASTAS
 note bottom of PC
-  Tudo roda localmente: o servidor só aceita
-  conexões do próprio computador (127.0.0.1).
+  As três partes são separadas e independentes:
+  o banco (PostgreSQL) precisa estar ligado para a API funcionar,
+  e a API precisa estar ligada para as telas funcionarem.
 end note
 @enduml

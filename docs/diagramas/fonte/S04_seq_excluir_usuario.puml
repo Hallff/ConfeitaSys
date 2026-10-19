@@ -2,25 +2,25 @@
 !include _seq.iuml
 title Sequência - Excluir Usuário (UC06)
 actor Usuário as U
-participant "Tela Conta" as T
-participant Servidor as S
+participant "Tela Conta\n(app.js → api.js)" as T
+participant "UsuarioControle\n(API REST)" as S
 participant UsuarioServico as US
 participant Senha
 participant UsuarioDAO as D
-database SQLite as DB
+database "PostgreSQL" as DB
 U -> T : senha + "Excluir usuário"
 T --> U : pedir confirmação
 U -> T : confirmar
-T -> S : DELETE /api/usuario {senha}
+T -> S : API 2.4  DELETE /api/usuario {senha}\n→ UsuarioControle.excluir()
 S -> US : excluir(dados)
-US -> D : buscar(con)
+US -> D : buscar()
 US -> Senha : conferir(senha, hash)
 alt senha incorreta
   S --> T : 400 "Senha incorreta"
 else ok
-  US -> D : excluir(con, id)
+  US -> D : excluir(id)
   D -> DB : DELETE FROM usuario
-  S -> S : encerrar sessões
+  S -> S : Sessoes.encerrarTodas()
   S --> T : 200 {ok}
   T --> U : tela de login (primeiro acesso)
 end

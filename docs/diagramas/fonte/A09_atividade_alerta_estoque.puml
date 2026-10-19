@@ -5,7 +5,7 @@ title Diagrama de Atividades - Alerta de Estoque Baixo e Validade (UC20, UC21)
 start
 repeat
   :Aguardar 20 s ou uma alteração\n(venda, estoque, produto);
-  |Sistema (servidor)|
+  |Sistema (API)|
   :Ler ingredientes do banco;
   :Selecionar itens com quantidade <= qtd. de alerta;
   :Selecionar itens vencidos ou que vencem em até 3 dias;

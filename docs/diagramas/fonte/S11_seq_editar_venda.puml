@@ -2,19 +2,20 @@
 !include _seq.iuml
 title Sequência - Editar Venda (UC18)
 actor Usuário as U
-participant "Tela Vendas" as T
-participant Servidor as S
+participant "Tela Vendas\n(app.js → api.js)" as T
+participant "API REST\nVendaControle\nAlertaControle" as S
 participant VendaServico as VS
 participant IngredienteDAO as ID
 participant VendaDAO as VD
-database SQLite as DB
+database "PostgreSQL" as DB
 U -> T : lápis > Editar
-T -> S : GET /api/vendas/{id}
+T -> S : API 5.3  GET /api/vendas/{id}\n→ VendaControle.consultar()
 S -> VS : consultar(id)
-VS -> VD : buscar(con, id)
+VS -> VD : buscar(id)
+VS -> ID : buscarParaAtualizar(cada ingrediente)\nSELECT ... FOR UPDATE
 S --> T : venda + itens
 U -> T : alterar produto / valor / ingredientes
-T -> S : PUT /api/vendas/{id}
+T -> S : API 5.4  PUT /api/vendas/{id}\n→ VendaControle.editar()
 S -> VS : editar(id, dados)
 VS -> DB : BEGIN
 VS -> VS : disponível = estoque + uso antigo da venda
@@ -23,16 +24,16 @@ alt insuficiente
   S --> T : 400 "Estoque insuficiente"
 else caso contrário
   loop itens antigos
-    VS -> ID : movimentar(con, id, +quantidade)
+    VS -> ID : movimentar(id, +quantidade)
   end
   loop itens novos
-    VS -> ID : movimentar(con, id, -quantidade)
+    VS -> ID : movimentar(id, -quantidade)
   end
-  VS -> VD : alterar(con, venda)
+  VS -> VD : alterar(venda)
   VD -> DB : UPDATE venda; DELETE/INSERT item_venda
   VS -> DB : COMMIT
   S --> T : 200 venda
   T --> U : "Pedido atualizado"
-  T -> S : GET /api/alertas
+  T -> S : API 6.1  GET /api/alertas\n→ AlertaControle.alertas()
 end
 @enduml

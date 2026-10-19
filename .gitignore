@@ -1,0 +1,19 @@
+# Compilação do backend (Maven)
+backend/target/
+backend/.maven/
+*.class
+
+# Arquivos gerados pelo sistema
+backend/backup/
+backend/relatorios/
+*.log
+
+# IDEs
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+
+# Sistema operacional
+Thumbs.db
+.DS_Store

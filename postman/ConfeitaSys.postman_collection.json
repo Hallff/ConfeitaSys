@@ -1,0 +1,941 @@
+{
+  "info": {
+    "name": "ConfeitaSys API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "As 27 APIs do ConfeitaSys, com os mesmos números do Swagger.\n\n1. Ligue o banco (banco/iniciar-banco.bat) e a API (backend/iniciar-backend.bat).\n2. Rode **2.3 Cadastrar usuário** (primeiro acesso) ou **1.1 Entrar**: o token é guardado sozinho na variável `token`.\n3. Rode qualquer outra API. Usuário e senha ficam nas variáveis `usuario` e `senha` da coleção.\n4. Os ids são **UUID** (ex.: `3fa85f64-5717-4562-b3fc-2c963f66afa6`). Eles são preenchidos sozinhos nas variáveis `ingredienteId`, `produtoId` e `vendaId` (pelas listas 3.1, 4.1 e 5.1 ou pelos cadastros 3.2, 4.2 e 5.2). O nº do pedido (#0012) é o campo `numero` da venda."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// data de hoje (AAAA-MM-DD) para os relatórios e a pesquisa de vendas",
+          "const d = new Date(); const z = n => String(n).padStart(2, '0');",
+          "pm.collectionVariables.set('hoje', d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()));",
+          "",
+          "// Os ids são UUID. Se a requisição usa um id que ainda está vazio,",
+          "// busca na API e preenche sozinho (precisa ter feito login antes).",
+          "const texto = pm.request.url.toString() + ' ' + (pm.request.body && pm.request.body.raw ? pm.request.body.raw : '');",
+          "const base = pm.collectionVariables.get('baseUrl');",
+          "const token = pm.collectionVariables.get('token');",
+          "function buscar(caminho, quando) {",
+          "  pm.sendRequest({ url: base + caminho, method: 'GET', header: { Authorization: 'Bearer ' + token } }, (err, res) => {",
+          "    if (!err && res.code === 200) quando(res.json());",
+          "  });",
+          "}",
+          "if (token) {",
+          "  const vazio = (v) => texto.includes('{{' + v + '}}') && !pm.collectionVariables.get(v);",
+          "  if (vazio('ingredienteId') || vazio('ingrediente1Id') || vazio('ingrediente2Id'))",
+          "    buscar('/api/ingredientes', (l) => { if (l.length) {",
+          "      if (!pm.collectionVariables.get('ingredienteId')) pm.collectionVariables.set('ingredienteId', l[l.length - 1].id);",
+          "      pm.collectionVariables.set('ingrediente1Id', l[0].id);",
+          "      pm.collectionVariables.set('ingrediente2Id', (l[1] || l[0]).id); } });",
+          "  if (vazio('produtoId')) buscar('/api/produtos', (l) => { if (l.length) pm.collectionVariables.set('produtoId', l[0].id); });",
+          "  if (vazio('vendaId')) buscar('/api/vendas', (l) => { if (l.length) pm.collectionVariables.set('vendaId', l[0].id); });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "usuario",
+      "value": "gabriel"
+    },
+    {
+      "key": "senha",
+      "value": "confeita123"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "ingredienteId",
+      "value": "",
+      "description": "UUID - preenchido sozinho"
+    },
+    {
+      "key": "produtoId",
+      "value": "",
+      "description": "UUID - preenchido sozinho"
+    },
+    {
+      "key": "vendaId",
+      "value": "",
+      "description": "UUID - preenchido sozinho"
+    },
+    {
+      "key": "ingrediente1Id",
+      "value": "",
+      "type": "string",
+      "description": "UUID - preenchido sozinho"
+    },
+    {
+      "key": "ingrediente2Id",
+      "value": "",
+      "type": "string",
+      "description": "UUID - preenchido sozinho"
+    },
+    {
+      "key": "hoje",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Acesso (login)",
+      "item": [
+        {
+          "name": "1.1 Entrar (login)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "**Tela:** Login → botão \"Entrar\"  \n**Frontend:** `API.acesso.login()` em frontend/js/api.js  \n**Backend:** `AcessoControle.login()` → UsuarioServico.login() → UsuarioDAO.buscar()  \n**Tabelas:** usuario",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"{{usuario}}\",\n  \"senha\": \"{{senha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.token) { pm.collectionVariables.set('token', j.token); console.log('token salvo: ' + j.token); }",
+                  "pm.test('API 1.1 respondeu com sucesso', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.2 Sair (logout)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "logout"
+              ]
+            },
+            "description": "**Tela:** menu lateral → \"Sair\"  \n**Frontend:** `API.acesso.logout()` em frontend/js/api.js  \n**Backend:** `AcessoControle.logout()` → Sessoes.encerrar()  \n**Tabelas:** —",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "1.3 Situação do sistema",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "status"
+              ]
+            },
+            "description": "**Tela:** Login (ao abrir) decide entre \"primeiro acesso\" e \"entrar\"; telas internas conferem se o login vale.  \n**Frontend:** `API.acesso.status()` em frontend/js/api.js  \n**Backend:** `AcessoControle.status()` → UsuarioServico.existeUsuario() → UsuarioDAO.buscar()  \n**Tabelas:** usuario",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Cadastro 1 - Usuário",
+      "item": [
+        {
+          "name": "2.1 Consultar usuário",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuario",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuario"
+              ]
+            },
+            "description": "**Tela:** Conta (ao abrir)  \n**Frontend:** `API.usuario.consultar()` em frontend/js/api.js  \n**Backend:** `UsuarioControle.consultar()` → UsuarioServico.consultar() → UsuarioDAO.buscar()  \n**Tabelas:** usuario"
+          }
+        },
+        {
+          "name": "2.2 Alterar nome e/ou senha",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuario",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuario"
+              ]
+            },
+            "description": "**Tela:** Conta → botão \"Salvar alterações\"  \n**Frontend:** `API.usuario.alterar()` em frontend/js/api.js  \n**Backend:** `UsuarioControle.alterar()` → UsuarioServico.alterar() → UsuarioDAO.alterar()  \n**Tabelas:** usuario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"{{usuario}}\",\n  \"senhaAtual\": \"{{senha}}\",\n  \"novaSenha\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.3 Cadastrar usuário (primeiro acesso)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuario",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuario"
+              ]
+            },
+            "description": "**Tela:** Login (primeiro acesso) → botão \"Criar usuário e entrar\"  \n**Frontend:** `API.usuario.cadastrar()` em frontend/js/api.js  \n**Backend:** `UsuarioControle.cadastrar()` → UsuarioServico.cadastrar() → UsuarioDAO.inserir()  \n**Tabelas:** usuario",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"{{usuario}}\",\n  \"senha\": \"{{senha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.token) { pm.collectionVariables.set('token', j.token); console.log('token salvo: ' + j.token); }",
+                  "pm.test('API 2.3 respondeu com sucesso', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.4 Excluir usuário",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuario",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuario"
+              ]
+            },
+            "description": "**Tela:** Conta → botão \"Excluir usuário\"  \n**Frontend:** `API.usuario.excluir()` em frontend/js/api.js  \n**Backend:** `UsuarioControle.excluir()` → UsuarioServico.excluir() → UsuarioDAO.excluir()  \n**Tabelas:** usuario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senha\": \"{{senha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Cadastro 2 - Estoque",
+      "item": [
+        {
+          "name": "3.1 Listar o estoque",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ingredientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ingredientes"
+              ]
+            },
+            "description": "**Tela:** Estoque (ao abrir); também carrega a lista de ingredientes nas janelas de produto e de venda.  \n**Frontend:** `API.estoque.listar()` em frontend/js/api.js  \n**Backend:** `IngredienteControle.listar()` → IngredienteServico.listar() → IngredienteDAO.listar()  \n**Tabelas:** ingrediente"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// guarda o id (UUID) dos 2 primeiros itens do estoque, usados nas receitas (4.2 e 4.4)",
+                  "const l = pm.response.json();",
+                  "if (Array.isArray(l) && l.length) {",
+                  "  pm.collectionVariables.set('ingrediente1Id', l[0].id);",
+                  "  if (l[1]) pm.collectionVariables.set('ingrediente2Id', l[1].id);",
+                  "  if (!pm.collectionVariables.get('ingredienteId')) pm.collectionVariables.set('ingredienteId', l[l.length - 1].id);",
+                  "  console.log('ids do estoque salvos');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.2 Incluir ingrediente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ingredientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ingredientes"
+              ]
+            },
+            "description": "**Tela:** Estoque → \"+ Novo item no estoque\" → \"Salvar\"  \n**Frontend:** `API.estoque.incluir()` em frontend/js/api.js  \n**Backend:** `IngredienteControle.incluir()` → IngredienteServico.incluir() → IngredienteDAO.inserir()  \n**Tabelas:** ingrediente",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Fermento químico\",\n  \"unidade\": \"KG\",\n  \"quantidade\": 0.5,\n  \"valorPago\": 10.0,\n  \"quantidadeAlerta\": 0.1,\n  \"validade\": \"2026-12-31\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.id) { pm.collectionVariables.set('ingredienteId', j.id); console.log('ingredienteId salvo: ' + j.id); }",
+                  "pm.test('API 3.2 respondeu com sucesso', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.3 Alterar ingrediente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ingredientes/{{ingredienteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ingredientes",
+                "{{ingredienteId}}"
+              ]
+            },
+            "description": "**Tela:** Estoque → lápis (Editar) → \"Salvar\"  \n**Frontend:** `API.estoque.alterar()` em frontend/js/api.js  \n**Backend:** `IngredienteControle.alterar()` → IngredienteServico.alterar() → IngredienteDAO.alterar()  \n**Tabelas:** ingrediente",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Fermento químico\",\n  \"unidade\": \"KG\",\n  \"quantidade\": 0.8,\n  \"valorPago\": 16.0,\n  \"quantidadeAlerta\": 0.2,\n  \"validade\": \"2026-12-31\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "3.4 Excluir ingrediente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ingredientes/{{ingredienteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ingredientes",
+                "{{ingredienteId}}"
+              ]
+            },
+            "description": "**Tela:** Estoque → lixeira (Excluir) → \"Excluir item\"  \n**Frontend:** `API.estoque.excluir()` em frontend/js/api.js  \n**Backend:** `IngredienteControle.excluir()` → IngredienteServico.excluir() → IngredienteDAO.excluir()  \n**Tabelas:** ingrediente (confere produto_ingrediente)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Cadastro 3 - Produtos",
+      "item": [
+        {
+          "name": "4.1 Listar o cardápio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produtos"
+              ]
+            },
+            "description": "**Tela:** Produtos (ao abrir); também carrega a lista de produtos na janela de Nova venda.  \n**Frontend:** `API.produtos.listar()` em frontend/js/api.js  \n**Backend:** `ProdutoControle.listar()` → ProdutoServico.listar() → ProdutoDAO.listar()  \n**Tabelas:** produto, produto_ingrediente, ingrediente"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// guarda o id (UUID) do primeiro produto, usado em 4.3, 4.4, 5.2 e 5.4",
+                  "const l = pm.response.json();",
+                  "if (Array.isArray(l) && l.length) { pm.collectionVariables.set('produtoId', l[0].id); console.log('produtoId salvo: ' + l[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.2 Incluir produto com receita",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produtos"
+              ]
+            },
+            "description": "**Tela:** Produtos → \"+ Novo produto\" → \"Salvar produto\"  \n**Frontend:** `API.produtos.incluir()` em frontend/js/api.js  \n**Backend:** `ProdutoControle.incluir()` → ProdutoServico.incluir() → ProdutoDAO.inserir()  \n**Tabelas:** produto, produto_ingrediente",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Bolo de morango\",\n  \"tamanho\": \"M\",\n  \"recheio\": \"Morango\",\n  \"precoVenda\": 80.0,\n  \"receita\": [\n    {\n      \"ingredienteId\": \"{{ingrediente1Id}}\",\n      \"quantidade\": 0.3\n    },\n    {\n      \"ingredienteId\": \"{{ingrediente2Id}}\",\n      \"quantidade\": 0.2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.id) { pm.collectionVariables.set('produtoId', j.id); console.log('produtoId salvo: ' + j.id); }",
+                  "pm.test('API 4.2 respondeu com sucesso', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.3 Consultar produto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos/{{produtoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produtos",
+                "{{produtoId}}"
+              ]
+            },
+            "description": "**Tela:** Produtos → lápis → \"Editar\" (carrega os dados na janela)  \n**Frontend:** `API.produtos.consultar()` em frontend/js/api.js  \n**Backend:** `ProdutoControle.consultar()` → ProdutoServico.consultar() → ProdutoDAO.buscar()  \n**Tabelas:** produto, produto_ingrediente, ingrediente"
+          }
+        },
+        {
+          "name": "4.4 Alterar produto e receita",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos/{{produtoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produtos",
+                "{{produtoId}}"
+              ]
+            },
+            "description": "**Tela:** Produtos → lápis → \"Editar\" → \"Salvar produto\"  \n**Frontend:** `API.produtos.alterar()` em frontend/js/api.js  \n**Backend:** `ProdutoControle.alterar()` → ProdutoServico.alterar() → ProdutoDAO.alterar()  \n**Tabelas:** produto, produto_ingrediente (a receita é regravada)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Bolo de morango\",\n  \"tamanho\": \"M\",\n  \"recheio\": \"Morango com chantilly\",\n  \"precoVenda\": 85.0,\n  \"receita\": [\n    {\n      \"ingredienteId\": \"{{ingrediente1Id}}\",\n      \"quantidade\": 0.3\n    },\n    {\n      \"ingredienteId\": \"{{ingrediente2Id}}\",\n      \"quantidade\": 0.2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "4.5 Excluir produto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos/{{produtoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "produtos",
+                "{{produtoId}}"
+              ]
+            },
+            "description": "**Tela:** Produtos → lápis → \"Excluir\" → \"Excluir produto\"  \n**Frontend:** `API.produtos.excluir()` em frontend/js/api.js  \n**Backend:** `ProdutoControle.excluir()` → ProdutoServico.excluir() → ProdutoDAO.excluir()  \n**Tabelas:** produto (a receita sai junto; as vendas antigas guardam o nome do produto)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Vendas",
+      "item": [
+        {
+          "name": "5.1 Pesquisar vendas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendas?data={{hoje}}&busca=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendas"
+              ],
+              "query": [
+                {
+                  "key": "data",
+                  "value": "{{hoje}}",
+                  "description": "Data AAAA-MM-DD (vazio = todas)"
+                },
+                {
+                  "key": "busca",
+                  "value": "",
+                  "description": "Produto, nº do pedido (#12) ou hora (14h)"
+                }
+              ]
+            },
+            "description": "**Tela:** Vendas (lista do dia escolhido) e campo de busca no canto superior direito.  \n**Frontend:** `API.vendas.pesquisar()` em frontend/js/api.js  \n**Backend:** `VendaControle.pesquisar()` → VendaServico.pesquisar() → VendaDAO.listar()  \n**Tabelas:** venda, item_venda"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// guarda o id (UUID) da venda mais recente, usado em 5.3, 5.4 e 5.5",
+                  "const l = pm.response.json();",
+                  "if (Array.isArray(l) && l.length) { pm.collectionVariables.set('vendaId', l[0].id); console.log('vendaId salvo: ' + l[0].id + ' (pedido #' + l[0].numero + ')'); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.2 Registrar venda (com baixa no estoque)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendas"
+              ]
+            },
+            "description": "**Tela:** Vendas → botão \"+\" no centro do topo (ou tecla N) → \"Salvar venda\"  \n**Frontend:** `API.vendas.registrar()` em frontend/js/api.js  \n**Backend:** `VendaControle.registrar()` → VendaServico.registrar() → VendaDAO.inserir() + IngredienteDAO.movimentar()  \n**Tabelas:** venda, item_venda, ingrediente (baixa)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"valorVenda\": 95.0,\n  \"itens\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.id) { pm.collectionVariables.set('vendaId', j.id); console.log('vendaId salvo: ' + j.id); }",
+                  "pm.test('API 5.2 respondeu com sucesso', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.3 Consultar venda pelo id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendas/{{vendaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendas",
+                "{{vendaId}}"
+              ]
+            },
+            "description": "**Tela:** Vendas → lápis do pedido → \"Editar\" (carrega o pedido na janela)  \n**Frontend:** `API.vendas.consultar()` em frontend/js/api.js  \n**Backend:** `VendaControle.consultar()` → VendaServico.consultar() → VendaDAO.buscar()  \n**Tabelas:** venda, item_venda"
+          }
+        },
+        {
+          "name": "5.4 Editar venda",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendas/{{vendaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendas",
+                "{{vendaId}}"
+              ]
+            },
+            "description": "**Tela:** Vendas → lápis → \"Editar\" → \"Salvar venda\"  \n**Frontend:** `API.vendas.editar()` em frontend/js/api.js  \n**Backend:** `VendaControle.editar()` → VendaServico.editar() → VendaDAO.alterar() + IngredienteDAO.movimentar()  \n**Tabelas:** venda, item_venda, ingrediente",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"valorVenda\": 100.0,\n  \"itens\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "5.5 Excluir venda / devolução",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendas/{{vendaId}}?devolver=sim",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendas",
+                "{{vendaId}}"
+              ],
+              "query": [
+                {
+                  "key": "devolver",
+                  "value": "sim",
+                  "description": "Devolver os ingredientes ao estoque? sim | nao"
+                }
+              ]
+            },
+            "description": "**Tela:** Vendas → lápis → \"Excluir\" → \"Excluir venda\" (com a opção de devolver ao estoque)  \n**Frontend:** `API.vendas.excluir()` em frontend/js/api.js  \n**Backend:** `VendaControle.excluir()` → VendaServico.excluir() → VendaDAO.excluir() (+ IngredienteDAO.movimentar() se devolver)  \n**Tabelas:** venda, item_venda, ingrediente"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Alertas",
+      "item": [
+        {
+          "name": "6.1 Alertas de estoque baixo e validade",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alertas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alertas"
+              ]
+            },
+            "description": "**Tela:** todas (faixa vermelha no topo + sirene), consultado a cada 20 s e após cada alteração.  \n**Frontend:** `API.alertas.consultar()` em frontend/js/api.js  \n**Backend:** `AlertaControle.alertas()` → IngredienteServico.alertas() → IngredienteDAO.listar()  \n**Tabelas:** ingrediente"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Relatórios",
+      "item": [
+        {
+          "name": "7.1 Relatório do estoque",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/relatorios/estoque",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "relatorios",
+                "estoque"
+              ]
+            },
+            "description": "**Tela:** Relatórios → aba \"Estoque\"  \n**Frontend:** `API.relatorios.estoque()` em frontend/js/api.js  \n**Backend:** `RelatorioControle.estoque()` → RelatorioServico.estoque()  \n**Tabelas:** ingrediente"
+          }
+        },
+        {
+          "name": "7.2 Relatório de itens em falta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/relatorios/faltando",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "relatorios",
+                "faltando"
+              ]
+            },
+            "description": "**Tela:** Relatórios → aba \"Itens em falta\"  \n**Frontend:** `API.relatorios.faltando()` em frontend/js/api.js  \n**Backend:** `RelatorioControle.faltando()` → RelatorioServico.faltando()  \n**Tabelas:** ingrediente"
+          }
+        },
+        {
+          "name": "7.3 Relatório de vendas do dia",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/relatorios/vendas?data={{hoje}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "relatorios",
+                "vendas"
+              ],
+              "query": [
+                {
+                  "key": "data",
+                  "value": "{{hoje}}",
+                  "description": "Data AAAA-MM-DD (vazio = hoje)"
+                }
+              ]
+            },
+            "description": "**Tela:** Relatórios → aba \"Vendas do dia\"  \n**Frontend:** `API.relatorios.vendas()` em frontend/js/api.js  \n**Backend:** `RelatorioControle.vendas()` → RelatorioServico.vendasDoDia()  \n**Tabelas:** venda, item_venda"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Backup",
+      "item": [
+        {
+          "name": "8.1 Fazer backup do banco",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup"
+              ]
+            },
+            "description": "**Tela:** menu lateral → \"Backup\"  \n**Frontend:** `API.backup.fazer()` em frontend/js/api.js  \n**Backend:** `BackupControle.fazerBackup()` → BackupServico.fazerBackup()  \n**Tabelas:** todas"
+          }
+        },
+        {
+          "name": "8.2 Salvar relatórios em arquivo (+ backup)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/relatorios/salvar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "relatorios",
+                "salvar"
+              ]
+            },
+            "description": "**Tela:** Relatórios → botão \"Salvar e fazer backup\"  \n**Frontend:** `API.backup.salvarRelatorios()` em frontend/js/api.js  \n**Backend:** `BackupControle.salvarRelatorios()` → RelatorioServico.salvarHtml() + BackupServico.fazerBackup()  \n**Tabelas:** —",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"{{hoje}}\",\n  \"html\": \"<h1>Relatórios do dia</h1>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

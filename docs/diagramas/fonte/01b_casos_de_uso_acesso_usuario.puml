@@ -13,7 +13,7 @@ rectangle "Acesso / Usuário" {
   usecase "Criptografar senha\n(PBKDF2-SHA256 + salt)" as CRIP
   usecase "Conferir senha" as CONF
   usecase "Bloquear após 5\ntentativas erradas" as BLOQ
-  usecase "Criar sessão\n(cookie 12 h)" as SES
+  usecase "Criar token de login\n(12 h)" as SES
 }
 U --> UC01
 U --> UC02
